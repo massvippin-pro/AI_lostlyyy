@@ -1,5 +1,6 @@
 """Centralized application settings using Pydantic Settings."""
 
+import urllib.parse
 from typing import List
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -35,18 +36,51 @@ class Settings(BaseSettings):
     @classmethod
     def assemble_db_url(cls, v: str) -> str:
         """
-        Normalize database URLs for SQLAlchemy 2.x compatibility.
-        Supabase provides URLs with 'postgres://' or 'postgresql://'.
-        SQLAlchemy with psycopg 3 requires 'postgresql+psycopg://'.
+        Normalize database URLs for SQLAlchemy 2.x and psycopg 3 compatibility.
+        - Strips extraneous surrounding quotes and whitespace.
+        - Converts 'postgres://' or 'postgresql://' to 'postgresql+psycopg://'.
+        - Safely URL-encodes special characters (e.g. '@', '?', '#', ':') in credentials
+          so that unencoded passwords (standard in Supabase) do not break URL parsing.
         """
         if not v:
             return "sqlite:///./lost_and_found.db"
 
-        url = str(v).strip()
-        if url.startswith("postgres://"):
-            return url.replace("postgres://", "postgresql+psycopg://", 1)
-        elif url.startswith("postgresql://") and not url.startswith("postgresql+"):
-            return url.replace("postgresql://", "postgresql+psycopg://", 1)
+        url = str(v).strip().strip('"').strip("'")
+
+        # Recognize PostgreSQL schemes
+        pg_schemes = ("postgres://", "postgresql://", "postgresql+psycopg://")
+        matching_scheme = None
+        for s in pg_schemes:
+            if url.startswith(s):
+                matching_scheme = s
+                break
+
+        if matching_scheme:
+            rest = url[len(matching_scheme):]
+
+            # Split path and query parameters from authority
+            if "/" in rest:
+                authority, path_query = rest.split("/", 1)
+                path_query = "/" + path_query
+            elif "?" in rest:
+                authority, path_query = rest.split("?", 1)
+                path_query = "?" + path_query
+            else:
+                authority, path_query = rest, ""
+
+            # In authority: username:password@host:port
+            # The host is always after the LAST '@' in the authority component
+            if "@" in authority:
+                userinfo, hostinfo = authority.rsplit("@", 1)
+                if ":" in userinfo:
+                    username, password = userinfo.split(":", 1)
+                    # Unquote first to prevent double-encoding % if already encoded, then quote
+                    encoded_password = urllib.parse.quote(urllib.parse.unquote(password), safe="")
+                    encoded_username = urllib.parse.quote(urllib.parse.unquote(username), safe="")
+                    authority = f"{encoded_username}:{encoded_password}@{hostinfo}"
+
+            return f"postgresql+psycopg://{authority}{path_query}"
+
         return url
 
     @property
