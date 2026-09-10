@@ -298,20 +298,20 @@ export default function Page() {
       <div className="pointer-events-none absolute top-[50rem] -right-48 -z-10 h-[450px] w-[500px] rounded-full bg-amber-500/5 blur-[120px]" />
 
       {/* Navigation Header */}
-      <header className="sticky top-0 z-30 border-b border-border/80 bg-white/80 backdrop-blur-xl shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-        <div className="mx-auto flex h-[70px] max-w-[1280px] items-center justify-between px-5 lg:px-8">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('home')}>
-            <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-indigo-600 to-blue-700 text-white shadow-md shadow-primary/25">
-              <Package size={20} strokeWidth={2.4} />
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-white/85 backdrop-blur-xl shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <div className="mx-auto flex h-[66px] sm:h-[70px] max-w-[1280px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none" onClick={() => setView('home')}>
+            <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-indigo-600 to-blue-700 text-white shadow-md shadow-primary/25">
+              <Package size={18} className="sm:size-5" strokeWidth={2.4} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[18px] font-extrabold tracking-tight text-foreground">Lostly</span>
-                <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-base sm:text-[18px] font-extrabold tracking-tight text-foreground">Lostly</span>
+                <span className="rounded-full border border-primary/20 bg-primary/10 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-primary shrink-0">
                   AI Matcher
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground font-medium -mt-0.5">Campus Intelligence</p>
+              <p className="hidden sm:block text-[11px] text-muted-foreground font-medium -mt-0.5 truncate">Campus Intelligence</p>
             </div>
           </div>
 
@@ -343,7 +343,7 @@ export default function Page() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-2.5">
             {/* Live API status */}
             <div className="hidden items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1 text-[11px] font-semibold text-emerald-800 sm:flex shadow-2xs">
               <span className="relative flex h-2 w-2">
@@ -355,47 +355,100 @@ export default function Page() {
 
             <button
               onClick={() => goReport('LOST')}
-              className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/25 hover:opacity-95 transition-all"
+              className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 sm:px-4 sm:py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/25 hover:opacity-95 active:scale-95 transition-all"
             >
               <Plus size={15} />
-              Report Item
+              <span className="hidden xs:inline">Report Item</span>
+              <span className="xs:hidden">Report</span>
             </button>
 
             <button
-              aria-label="Menu"
+              aria-label="Toggle Navigation Menu"
               onClick={() => setMobileNav(!mobileNav)}
-              className="ml-1 rounded-lg p-2 text-muted-foreground hover:bg-muted md:hidden"
+              className="flex size-9 items-center justify-center rounded-xl border border-border/70 bg-muted/30 p-2 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all md:hidden"
             >
-              {mobileNav ? <X size={19} /> : <Menu size={19} />}
+              {mobileNav ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
         </div>
 
+        {/* Mobile Navigation Drawer */}
         {mobileNav && (
-          <nav className="border-t border-border bg-white p-3 md:hidden">
-            {nav.map(({ id, label, icon: Icon }) => (
+          <div className="border-t border-border/80 bg-white/95 backdrop-blur-xl px-4 py-3 md:hidden shadow-lg animate-in slide-in-from-top-2 duration-200">
+            <nav className="space-y-1">
+              {nav.map(({ id, label, icon: Icon }) => {
+                const isActive = view === id
+                return (
+                  <button
+                    key={id}
+                    onClick={() => {
+                      if (id === 'matches' && !activeMatchResponse && reports.length > 0) {
+                        handleTriggerMatch(reports[0])
+                      } else {
+                        setView(id as View)
+                      }
+                      setMobileNav(false)
+                    }}
+                    className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-sm font-semibold transition-all ${
+                      isActive
+                        ? 'bg-primary/10 text-primary ring-1 ring-primary/20'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon size={17} className={isActive ? 'text-primary' : 'text-muted-foreground'} />
+                      <span>{label}</span>
+                    </div>
+                    {id === 'reports' && reports.length > 0 && (
+                      <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">
+                        {reports.length}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </nav>
+
+            {/* Mobile Drawer Quick Actions */}
+            <div className="mt-3 pt-3 border-t border-border/60 grid grid-cols-2 gap-2">
               <button
-                key={id}
                 onClick={() => {
-                  if (id === 'matches' && !activeMatchResponse && reports.length > 0) {
-                    handleTriggerMatch(reports[0])
-                  } else {
-                    setView(id as View)
-                  }
+                  goReport('LOST')
                   setMobileNav(false)
                 }}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm text-muted-foreground hover:bg-muted"
+                className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500/10 text-amber-800 border border-amber-500/20 py-2.5 text-xs font-bold hover:bg-amber-500/20 active:scale-95 transition-all"
               >
-                <Icon size={17} />
-                {label}
+                <Search size={14} />
+                Report Lost
               </button>
-            ))}
-          </nav>
+              <button
+                onClick={() => {
+                  goReport('FOUND')
+                  setMobileNav(false)
+                }}
+                className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500/10 text-emerald-800 border border-emerald-500/20 py-2.5 text-xs font-bold hover:bg-emerald-500/20 active:scale-95 transition-all"
+              >
+                <Package size={14} />
+                Report Found
+              </button>
+            </div>
+
+            {/* Mobile API Live status bar */}
+            <div className="mt-2.5 flex items-center justify-between rounded-lg bg-muted/40 px-3 py-1.5 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1.5 font-medium">
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live PostgreSQL Sync
+              </span>
+              <span className="text-[10px] font-mono font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                Connected
+              </span>
+            </div>
+          </div>
         )}
       </header>
 
       {/* Main Container */}
-      <main className="mx-auto max-w-[1280px] px-5 py-8 pb-24 lg:px-8 lg:py-10">
+      <main className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8 pb-24 lg:px-8 lg:py-10">
         {view === 'home' && (
           <Dashboard
             reports={reports}
@@ -549,35 +602,35 @@ function Dashboard({
   return (
     <div className="space-y-8">
       {/* Hero Greeting Card */}
-      <div className="relative overflow-hidden rounded-3xl border border-border/80 bg-gradient-to-b from-white via-white to-slate-50/50 p-6 sm:p-10 shadow-xs">
+      <div className="relative overflow-hidden rounded-3xl border border-border/80 bg-gradient-to-b from-white via-white to-slate-50/50 p-5 sm:p-8 lg:p-10 shadow-xs">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary backdrop-blur-xs mb-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11px] sm:text-xs font-semibold text-primary backdrop-blur-xs mb-3">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
               </span>
               Campus Intelligent Agent • 5-Factor Weighted Engine
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground">
               Campus Matching Center
             </h1>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+            <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm leading-relaxed text-muted-foreground">
               Deterministic heuristic matching cross-evaluating student Lost & Found reports across <span className="font-semibold text-foreground">Category (20%)</span>, <span className="font-semibold text-foreground">Color (15%)</span>, <span className="font-semibold text-foreground">Location (20%)</span>, <span className="font-semibold text-foreground">Time (20%)</span>, and <span className="font-semibold text-foreground">NLP Description Overlap (25%)</span>.
             </p>
           </div>
 
-          <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
+          <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
             <button
               onClick={() => onReport('LOST')}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-amber-500/20 hover:opacity-95 transition-all"
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-amber-500/20 hover:opacity-95 active:scale-95 transition-all w-full sm:w-auto"
             >
               <Search size={17} />
               I Lost Something
             </button>
             <button
               onClick={() => onReport('FOUND')}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-emerald-600/20 hover:opacity-95 transition-all"
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-emerald-600/20 hover:opacity-95 active:scale-95 transition-all w-full sm:w-auto"
             >
               <Package size={17} />
               I Found Something
@@ -587,16 +640,16 @@ function Dashboard({
       </div>
 
       {/* Metrics Row */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3.5 sm:gap-4 grid-cols-1 sm:grid-cols-3">
         {/* Total Active Reports */}
-        <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white p-6 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-300">
+        <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white p-5 sm:p-6 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-300">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
             <span>Total Active Reports</span>
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:scale-110 transition-transform">
               <FileText size={16} />
             </div>
           </div>
-          <p className="mt-4 text-4xl font-black tracking-tight text-foreground">{isLoading ? '...' : reports.length}</p>
+          <p className="mt-3 sm:mt-4 text-3xl sm:text-4xl font-black tracking-tight text-foreground">{isLoading ? '...' : reports.length}</p>
           <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>Synced in real-time with PostgreSQL</span>
@@ -604,18 +657,18 @@ function Dashboard({
         </div>
 
         {/* Lost vs Found */}
-        <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white p-6 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-300">
+        <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white p-5 sm:p-6 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-300">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
             <span>Lost vs Found Ratio</span>
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:scale-110 transition-transform">
               <Layers size={16} />
             </div>
           </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-4xl font-black text-amber-600">{lostCount}</span>
+          <div className="mt-3 sm:mt-4 flex items-baseline gap-2">
+            <span className="text-3xl sm:text-4xl font-black text-amber-600">{lostCount}</span>
             <span className="text-xs font-semibold text-muted-foreground">Lost</span>
             <span className="text-muted-foreground/50">/</span>
-            <span className="text-4xl font-black text-emerald-600">{foundCount}</span>
+            <span className="text-3xl sm:text-4xl font-black text-emerald-600">{foundCount}</span>
             <span className="text-xs font-semibold text-muted-foreground">Found</span>
           </div>
           {/* Visual Ratio Bar */}
@@ -632,7 +685,7 @@ function Dashboard({
         </div>
 
         {/* AI Matching Status */}
-        <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white p-6 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+        <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white p-5 sm:p-6 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
               <span>AI Engine Status</span>
@@ -640,7 +693,7 @@ function Dashboard({
                 <Sparkles size={16} />
               </div>
             </div>
-            <p className="mt-4 text-xl font-bold text-emerald-600 flex items-center gap-2">
+            <p className="mt-3 sm:mt-4 text-lg sm:text-xl font-bold text-emerald-600 flex items-center gap-2">
               <span className="size-2 rounded-full bg-emerald-500 animate-ping" />
               {topMatch ? `Best: ${topMatch.overall_score}% (${topMatch.decision})` : 'Engine Ready'}
             </p>
@@ -651,7 +704,7 @@ function Dashboard({
           {!activeMatch && reports.length > 0 && (
             <button
               onClick={() => onTriggerMatch(reports[0])}
-              className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 transition-all"
+              className="mt-4 inline-flex w-full sm:w-fit items-center justify-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 active:scale-95 transition-all"
             >
               <Sparkles size={13} />
               Run Demo Match ({reports[0].category})
@@ -662,25 +715,25 @@ function Dashboard({
 
       {/* Active Match Banner if present */}
       {topMatch && activeMatch && (
-        <div className="rounded-3xl border border-primary/20 bg-gradient-to-r from-primary/[0.04] to-indigo-50/50 p-6 sm:p-7 shadow-xs">
+        <div className="rounded-3xl border border-primary/20 bg-gradient-to-r from-primary/[0.04] to-indigo-50/50 p-4 sm:p-7 shadow-xs">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-            <div className="flex items-start gap-4">
-              <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border-2 border-primary/30 bg-white text-2xl font-black text-primary shadow-sm">
+            <div className="flex items-start gap-3.5 sm:gap-4">
+              <div className="flex size-13 sm:size-16 shrink-0 items-center justify-center rounded-2xl border-2 border-primary/30 bg-white text-xl sm:text-2xl font-black text-primary shadow-sm">
                 {topMatch.overall_score}
               </div>
-              <div>
-                <div className="flex items-center gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
                     {topMatch.decision}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground truncate">
                     Matched against {activeMatch.source_report.category} ({activeMatch.source_report.type})
                   </span>
                 </div>
-                <h3 className="mt-1.5 text-lg font-bold text-foreground">
+                <h3 className="mt-1 text-base sm:text-lg font-bold text-foreground">
                   {topMatch.candidate_report.category} in {topMatch.candidate_report.location}
                 </h3>
-                <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+                <p className="mt-1 line-clamp-2 sm:line-clamp-1 text-xs text-muted-foreground">
                   {topMatch.explanation.summary}
                 </p>
               </div>
@@ -688,7 +741,7 @@ function Dashboard({
 
             <button
               onClick={() => onView('matches')}
-              className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 transition-all"
+              className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 active:scale-95 transition-all w-full sm:w-auto"
             >
               Examine Match Decomposition <ChevronRight size={15} />
             </button>
@@ -700,7 +753,7 @@ function Dashboard({
       <div>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-foreground">Recent Campus Reports</h2>
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">Recent Campus Reports</h2>
             <p className="text-xs text-muted-foreground">Select any item to trigger the heuristic matching agent</p>
           </div>
           <button
@@ -732,11 +785,11 @@ function Dashboard({
             reports.slice(0, 6).map((r) => (
               <div
                 key={r.id}
-                className="group flex flex-col justify-between gap-4 rounded-2xl border border-border/80 bg-white p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all sm:flex-row sm:items-center sm:px-6"
+                className="group flex flex-col justify-between gap-3.5 rounded-2xl border border-border/80 bg-white p-4 sm:p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all sm:flex-row sm:items-center sm:px-6"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3.5 min-w-0">
                   <div
-                    className={`flex size-11 shrink-0 items-center justify-center rounded-xl font-black text-xs shadow-xs ${
+                    className={`flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-xl font-black text-xs shadow-xs ${
                       r.type === 'LOST'
                         ? 'bg-gradient-to-br from-amber-50 to-orange-100 text-amber-800 border border-amber-200/80'
                         : 'bg-gradient-to-br from-emerald-50 to-teal-100 text-emerald-800 border border-emerald-200/80'
@@ -744,54 +797,56 @@ function Dashboard({
                   >
                     {r.type}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-base font-bold text-foreground">
+                      <h4 className="text-base font-bold text-foreground truncate">
                         {r.category}
                       </h4>
                       {r.color && (
-                        <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground shrink-0">
                           {r.color}
                         </span>
                       )}
                     </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1 font-medium text-foreground/80">
-                        <MapPin size={12} className="text-primary" /> {r.location}
+                        <MapPin size={12} className="text-primary shrink-0" /> {r.location}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Clock size={12} /> {new Date(r.date_time).toLocaleDateString()}
+                        <Clock size={12} className="shrink-0" /> {new Date(r.date_time).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="mt-1.5 line-clamp-1 text-xs text-muted-foreground/90 max-w-xl">
+                    <p className="mt-1 line-clamp-2 sm:line-clamp-1 text-xs text-muted-foreground/90 max-w-xl">
                       {r.description}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                  <button
-                    onClick={() => onViewDetails(r)}
-                    className="flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-all shadow-xs"
-                    title="View full submitted report details"
-                  >
-                    <Eye size={13} />
-                    Details
-                  </button>
+                <div className="flex w-full items-center justify-between gap-2 pt-3 border-t border-border/60 sm:w-auto sm:border-0 sm:pt-0 sm:justify-end shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => onViewDetails(r)}
+                      className="flex items-center gap-1 rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted active:scale-95 transition-all shadow-xs"
+                      title="View full submitted report details"
+                    >
+                      <Eye size={13} />
+                      Details
+                    </button>
+                    <button
+                      onClick={() => onDelete(r)}
+                      className="rounded-xl p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 active:scale-95 transition-colors"
+                      title="Delete report"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                   <button
                     onClick={() => onTriggerMatch(r)}
-                    className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 transition-all"
+                    className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 active:scale-95 transition-all"
                   >
                     <Sparkles size={13} />
                     Run AI Match
-                  </button>
-                  <button
-                    onClick={() => onDelete(r)}
-                    className="rounded-xl p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                    title="Delete report"
-                  >
-                    <Trash2 size={15} />
                   </button>
                 </div>
               </div>
@@ -1001,18 +1056,18 @@ function ReportForm({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-2">
           <button
             type="button"
             onClick={onBack}
-            className="rounded-xl border border-border bg-white px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted"
+            className="w-full sm:w-auto rounded-xl border border-border bg-white px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted text-center"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95 disabled:opacity-70"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95 disabled:opacity-70 text-center"
           >
             {isSubmitting ? (
               <>
@@ -1077,7 +1132,7 @@ function ReportsView({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
@@ -1085,17 +1140,17 @@ function ReportsView({
           <ArrowLeft size={15} /> Back to dashboard
         </button>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={onRefresh}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted"
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted shadow-xs active:scale-95 transition-all"
           >
             <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
             Refresh
           </button>
           <button
             onClick={() => onReport('LOST')}
-            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+            className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground shadow-xs hover:opacity-95 active:scale-95 transition-all"
           >
             <Plus size={14} />
             New Report
@@ -1119,12 +1174,12 @@ function ReportsView({
 
       {/* Filters Bar */}
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <div className="flex rounded-xl border border-border bg-white p-1 shadow-sm">
+        <div className="flex w-full sm:w-auto overflow-x-auto rounded-xl border border-border bg-white p-1 shadow-sm">
           {(['ALL', 'LOST', 'FOUND'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              className={`flex-1 sm:flex-initial rounded-lg px-3 py-1.5 text-xs font-semibold transition-all whitespace-nowrap ${
                 filterType === t
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -1135,14 +1190,14 @@ function ReportsView({
           ))}
         </div>
 
-        <div className="relative">
+        <div className="relative w-full sm:w-64">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search category, location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-border bg-white pl-9 pr-3 py-1.5 text-xs focus:border-primary sm:w-64"
+            className="w-full rounded-xl border border-border bg-white pl-9 pr-3 py-2 sm:py-1.5 text-xs focus:border-primary"
           />
         </div>
       </div>
@@ -1157,11 +1212,11 @@ function ReportsView({
           filtered.map((r) => (
             <div
               key={r.id}
-              className="group flex flex-col justify-between gap-4 rounded-2xl border border-border/80 bg-white p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all sm:flex-row sm:items-center sm:px-6"
+              className="group flex flex-col justify-between gap-3.5 rounded-2xl border border-border/80 bg-white p-4 sm:p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all sm:flex-row sm:items-center sm:px-6"
             >
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-3.5 min-w-0">
                 <div
-                  className={`flex size-11 shrink-0 items-center justify-center rounded-xl font-black text-xs shadow-xs ${
+                  className={`flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-xl font-black text-xs shadow-xs ${
                     r.type === 'LOST'
                       ? 'bg-gradient-to-br from-amber-50 to-orange-100 text-amber-800 border border-amber-200/80'
                       : 'bg-gradient-to-br from-emerald-50 to-teal-100 text-emerald-800 border border-emerald-200/80'
@@ -1169,13 +1224,13 @@ function ReportsView({
                 >
                   {r.type}
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-bold text-foreground">
+                    <h3 className="text-base font-bold text-foreground truncate">
                       {r.category}
                     </h3>
                     {r.color && (
-                      <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground shrink-0">
                         {r.color}
                       </span>
                     )}
@@ -1183,40 +1238,42 @@ function ReportsView({
                   <p className="mt-1 text-xs text-muted-foreground/90 max-w-xl line-clamp-2 leading-relaxed">
                     {r.description}
                   </p>
-                  <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+                  <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-1 font-medium text-foreground/80">
-                      <MapPin size={11} className="text-primary" /> {r.location}
+                      <MapPin size={11} className="text-primary shrink-0" /> {r.location}
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
-                      <Clock size={11} /> {new Date(r.date_time).toLocaleString()}
+                      <Clock size={11} className="shrink-0" /> {new Date(r.date_time).toLocaleString()}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                <button
-                  onClick={() => onViewDetails(r)}
-                  className="flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-all shadow-xs"
-                  title="View full submitted details"
-                >
-                  <Eye size={13} />
-                  View Details
-                </button>
+              <div className="flex w-full items-center justify-between gap-2 pt-3 border-t border-border/60 sm:w-auto sm:border-0 sm:pt-0 sm:justify-end shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onViewDetails(r)}
+                    className="flex items-center gap-1 rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted active:scale-95 transition-all shadow-xs"
+                    title="View full submitted details"
+                  >
+                    <Eye size={13} />
+                    Details
+                  </button>
+                  <button
+                    onClick={() => onDelete(r)}
+                    className="rounded-xl p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 active:scale-95 transition-colors"
+                    title="Delete report"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
                 <button
                   onClick={() => onTriggerMatch(r)}
-                  className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 transition-all"
+                  className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 active:scale-95 transition-all"
                 >
                   <Sparkles size={13} />
                   Run AI Match
-                </button>
-                <button
-                  onClick={() => onDelete(r)}
-                  className="rounded-xl p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                  title="Delete report"
-                >
-                  <Trash2 size={15} />
                 </button>
               </div>
             </div>
@@ -1311,7 +1368,7 @@ function MatchesView({
             {reports.length > 0 && (
               <button
                 onClick={() => onTriggerMatch(reports[0])}
-                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-95 transition-all"
+                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-95 active:scale-95 transition-all w-full sm:w-auto"
               >
                 <Sparkles size={15} />
                 Run Match on {reports[0].category} ({reports[0].type})
@@ -1550,12 +1607,12 @@ function SideBySideMatchInspector({
   return (
     <div className="space-y-6">
       {/* Top Banner & Decision */}
-      <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <div className="flex items-center gap-2">
+      <div className="rounded-2xl border border-border bg-white p-4 sm:p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-3 sm:gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               <span
-                className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                className={`rounded-full px-2.5 py-0.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider ${
                   isMatch
                     ? 'bg-emerald-100 text-emerald-800'
                     : isReview
@@ -1569,9 +1626,9 @@ function SideBySideMatchInspector({
                   ? 'MANUAL REVIEW RECOMMENDED'
                   : 'LOW COMPATIBILITY'}
               </span>
-              <span className="text-xs text-muted-foreground">Deterministic Heuristic AI</span>
+              <span className="text-[11px] text-muted-foreground">Deterministic Heuristic AI</span>
             </div>
-            <h3 className="mt-2 text-xl font-bold text-foreground">
+            <h3 className="mt-1.5 text-base sm:text-xl font-bold text-foreground">
               Candidate #{candidate_report.id.slice(0, 6)} Compatibility
             </h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -1579,21 +1636,21 @@ function SideBySideMatchInspector({
             </p>
           </div>
 
-          <div className="flex size-20 shrink-0 flex-col items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
-            <span className="text-3xl font-black leading-none">{overall_score}</span>
-            <span className="mt-1 text-[9px] font-bold uppercase tracking-widest opacity-80">/ 100</span>
+          <div className="flex size-14 sm:size-20 shrink-0 flex-col items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
+            <span className="text-2xl sm:text-3xl font-black leading-none">{overall_score}</span>
+            <span className="mt-0.5 sm:mt-1 text-[8px] sm:text-[9px] font-bold uppercase tracking-widest opacity-80">/ 100</span>
           </div>
         </div>
 
         {/* AI Summary Banner */}
-        <div className="mt-4 rounded-xl bg-muted/60 p-4 text-xs leading-relaxed text-foreground">
+        <div className="mt-3.5 sm:mt-4 rounded-xl bg-muted/60 p-3 sm:p-4 text-xs leading-relaxed text-foreground">
           <span className="font-semibold text-primary block mb-0.5">AI Agent Assessment:</span>
           {explanation.summary}
         </div>
       </div>
 
       {/* Side-by-Side Comparison Grid */}
-      <div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
+      <div className="rounded-2xl border border-border bg-white p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Side-by-Side Attribute Comparison
@@ -1601,7 +1658,7 @@ function SideBySideMatchInspector({
           <span className="text-[11px] text-muted-foreground">Source vs Candidate</span>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3.5 sm:gap-4 grid-cols-1 sm:grid-cols-2">
           {/* Source Column */}
           <div className="rounded-xl border border-border bg-background p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -1867,9 +1924,9 @@ function ReportDetailsModal({
   const formattedCreated = new Date(report.created_at).toLocaleString()
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 sm:p-4 backdrop-blur-sm">
       <div
-        className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-white p-6 shadow-2xl"
+        className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-2xl border border-border bg-white p-4 sm:p-6 shadow-2xl"
         role="dialog"
         aria-modal="true"
       >
@@ -1914,7 +1971,7 @@ function ReportDetailsModal({
         </div>
 
         {/* Structured Details Grid */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-2">
+        <div className="mt-5 grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-2.5 sm:gap-3">
           <div className="rounded-xl border border-border bg-background p-3.5">
             <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Category
@@ -1996,13 +2053,13 @@ function ReportDetailsModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+        <div className="mt-6 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-t border-border pt-4">
           <button
             onClick={() => {
               onClose()
               onDelete(report)
             }}
-            className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+            className="flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 active:scale-95 transition-all text-center"
           >
             <Trash2 size={15} />
             Delete Report
@@ -2011,7 +2068,7 @@ function ReportDetailsModal({
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="rounded-xl border border-border bg-white px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors"
+              className="flex-1 sm:flex-initial rounded-xl border border-border bg-white px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted active:scale-95 transition-all text-center"
             >
               Close
             </button>
@@ -2020,7 +2077,7 @@ function ReportDetailsModal({
                 onClose()
                 onTriggerMatch(report)
               }}
-              className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-95 transition-opacity"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-95 active:scale-95 transition-all text-center"
             >
               <Sparkles size={14} />
               Run AI Match
@@ -2047,9 +2104,9 @@ function DeleteConfirmationModal({
   onConfirm: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 sm:p-4 backdrop-blur-sm">
       <div
-        className="w-full max-w-md rounded-2xl border border-border bg-white p-6 shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-border bg-white p-5 sm:p-6 shadow-2xl"
         role="dialog"
         aria-modal="true"
       >
@@ -2087,12 +2144,12 @@ function DeleteConfirmationModal({
         </div>
 
         {/* Modal Actions */}
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2.5">
           <button
             type="button"
             disabled={isDeleting}
             onClick={onCancel}
-            className="rounded-xl border border-border bg-white px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto rounded-xl border border-border bg-white px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50 text-center"
           >
             Cancel
           </button>
@@ -2100,7 +2157,7 @@ function DeleteConfirmationModal({
             type="button"
             disabled={isDeleting}
             onClick={onConfirm}
-            className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50 text-center"
           >
             {isDeleting ? (
               <>
@@ -2152,9 +2209,9 @@ function ClaimHandoverModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 sm:p-4 backdrop-blur-sm">
       <div
-        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-white p-6 shadow-2xl"
+        className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl border border-border bg-white p-4 sm:p-6 shadow-2xl"
         role="dialog"
         aria-modal="true"
       >
@@ -2230,17 +2287,17 @@ function ClaimHandoverModal({
                 </select>
               </div>
 
-              <div className="mt-6 flex justify-end gap-2.5 pt-2 border-t border-border">
+              <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2.5 pt-3 border-t border-border">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-xl border border-border bg-white px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted"
+                  className="w-full sm:w-auto rounded-xl border border-border bg-white px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted active:scale-95 transition-all text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-95"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-95 active:scale-95 transition-all text-center"
                 >
                   <ShieldCheck size={14} />
                   Issue Campus Handover Pass
@@ -2295,7 +2352,7 @@ function ClaimHandoverModal({
 
             <button
               onClick={onClose}
-              className="w-full rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-95"
+              className="w-full rounded-xl bg-primary py-3 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-95 active:scale-95 transition-all text-center"
             >
               Done & Return to Match Center
             </button>
