@@ -311,7 +311,13 @@ export default function Page() {
             {nav.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
-                onClick={() => setView(id as View)}
+                onClick={() => {
+                  if (id === 'matches' && !activeMatchResponse && reports.length > 0) {
+                    handleTriggerMatch(reports[0])
+                  } else {
+                    setView(id as View)
+                  }
+                }}
                 className={`rounded-lg px-3.5 py-2 text-[13px] font-medium transition-all ${
                   view === id
                     ? 'bg-white text-foreground shadow-sm ring-1 ring-border'
@@ -360,7 +366,11 @@ export default function Page() {
               <button
                 key={id}
                 onClick={() => {
-                  setView(id as View)
+                  if (id === 'matches' && !activeMatchResponse && reports.length > 0) {
+                    handleTriggerMatch(reports[0])
+                  } else {
+                    setView(id as View)
+                  }
                   setMobileNav(false)
                 }}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm text-muted-foreground hover:bg-muted"
@@ -417,11 +427,13 @@ export default function Page() {
 
         {view === 'matches' && (
           <MatchesView
+            reports={reports}
             matchResponse={activeMatchResponse}
             selectedCandidate={selectedCandidate}
             isLoading={isMatchingLoading}
             error={matchError}
             onSelectCandidate={setSelectedCandidate}
+            onTriggerMatch={handleTriggerMatch}
             onBack={() => setView('home')}
             onNavigateReport={() => goReport('LOST')}
             onInitiateClaim={(source, candidate) => {
@@ -583,17 +595,28 @@ function Dashboard({
           <p className="mt-1 text-xs text-muted-foreground">Candidate pools cross-evaluated</p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <span>AI Matching Status</span>
-            <Sparkles size={16} className="text-primary" />
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <span>AI Matching Status</span>
+              <Sparkles size={16} className="text-primary" />
+            </div>
+            <p className="mt-3 text-lg font-bold text-emerald-600">
+              {topMatch ? `Best: ${topMatch.overall_score}% (${topMatch.decision})` : 'Engine Ready'}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {activeMatch ? `${activeMatch.candidates_evaluated} candidates evaluated` : 'Select any report to run matching'}
+            </p>
           </div>
-          <p className="mt-3 text-lg font-bold text-emerald-600">
-            {topMatch ? `Best: ${topMatch.overall_score}% (${topMatch.decision})` : 'Engine Ready'}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {activeMatch ? `${activeMatch.candidates_evaluated} candidates evaluated` : 'Select any report to run matching'}
-          </p>
+          {!activeMatch && reports.length > 0 && (
+            <button
+              onClick={() => onTriggerMatch(reports[0])}
+              className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition-all"
+            >
+              <Sparkles size={13} />
+              Run Demo Match on {reports[0].category} ({reports[0].type})
+            </button>
+          )}
         </div>
       </div>
 
@@ -1153,20 +1176,24 @@ function ReportsView({
    AI MATCHES VIEW (EXPLAINABILITY ENGINE)
    ============================================================================== */
 function MatchesView({
+  reports,
   matchResponse,
   selectedCandidate,
   isLoading,
   error,
   onSelectCandidate,
+  onTriggerMatch,
   onBack,
   onNavigateReport,
   onInitiateClaim,
 }: {
+  reports: Report[]
   matchResponse: MatchResponse | null
   selectedCandidate: CandidateMatch | null
   isLoading: boolean
   error: string | null
   onSelectCandidate: (c: CandidateMatch) => void
+  onTriggerMatch: (r: Report) => void
   onBack: () => void
   onNavigateReport: () => void
   onInitiateClaim: (source: Report, candidate: CandidateMatch) => void
@@ -1201,18 +1228,116 @@ function MatchesView({
 
   if (!matchResponse) {
     return (
-      <div className="mx-auto max-w-xl py-12 text-center">
-        <Sparkles size={36} className="mx-auto text-primary" />
-        <h2 className="mt-3 text-lg font-bold">No Active Match Session</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Select an item from the dashboard or file a report to run the AI matching engine.
-        </p>
+      <div className="space-y-6">
         <button
-          onClick={onNavigateReport}
-          className="mt-6 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
         >
-          File a Report
+          <ArrowLeft size={15} /> Back to dashboard
         </button>
+
+        <div className="rounded-2xl border border-border bg-white p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                  AI Matching Engine
+                </span>
+                <span className="text-xs text-muted-foreground">Select a report to evaluate</span>
+              </div>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                Campus Candidate Matcher
+              </h1>
+              <p className="mt-1 max-w-xl text-xs text-muted-foreground leading-relaxed">
+                Select any active lost or found item below to execute our deterministic 5-factor heuristic agent (Category 20%, Color 15%, Location 20%, Chronology 20%, NLP Overlap 25%).
+              </p>
+            </div>
+
+            {reports.length > 0 && (
+              <button
+                onClick={() => onTriggerMatch(reports[0])}
+                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-95 transition-all"
+              >
+                <Sparkles size={15} />
+                Run Match on {reports[0].category} ({reports[0].type})
+              </button>
+            )}
+          </div>
+        </div>
+
+        {reports.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-white p-12 text-center shadow-sm">
+            <Sparkles size={36} className="mx-auto text-primary" />
+            <h3 className="mt-3 text-base font-bold text-foreground">No Reports in Database Yet</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              File a lost or found report to run candidate heuristic matching.
+            </p>
+            <button
+              onClick={onNavigateReport}
+              className="mt-4 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+            >
+              File a Report
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Choose a Report to Cross-Evaluate ({reports.length} available)
+            </h3>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {reports.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex flex-col justify-between rounded-2xl border border-border bg-white p-5 shadow-xs hover:border-primary/40 transition-all gap-4"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                          r.type === 'LOST'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}
+                      >
+                        {r.type}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground font-mono">
+                        {r.id.slice(0, 8)}...
+                      </span>
+                    </div>
+
+                    <h4 className="text-base font-bold text-foreground">
+                      {r.category} {r.color ? `· ${r.color}` : ''}
+                    </h4>
+
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <MapPin size={12} /> {r.location}
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Clock size={12} /> {new Date(r.date_time).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <p className="line-clamp-2 text-xs text-muted-foreground/80 leading-relaxed">
+                      {r.description}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => onTriggerMatch(r)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/10 py-2.5 text-xs font-bold text-primary hover:bg-primary hover:text-white transition-all"
+                  >
+                    <Sparkles size={14} />
+                    Evaluate Against Opposite Pool
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     )
   }
