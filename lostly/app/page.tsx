@@ -291,19 +291,27 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-primary/20 selection:text-primary">
+      {/* Ambient background glows */}
+      <div className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[550px] w-[1100px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-primary/15 via-indigo-400/10 to-purple-500/10 blur-[130px]" />
+      <div className="pointer-events-none absolute top-[36rem] -left-48 -z-10 h-[450px] w-[500px] rounded-full bg-emerald-500/5 blur-[120px]" />
+      <div className="pointer-events-none absolute top-[50rem] -right-48 -z-10 h-[450px] w-[500px] rounded-full bg-amber-500/5 blur-[120px]" />
+
       {/* Navigation Header */}
-      <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-[68px] max-w-[1280px] items-center justify-between px-5 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-[11px] bg-primary text-primary-foreground shadow-sm">
-              <Package size={19} strokeWidth={2.4} />
+      <header className="sticky top-0 z-30 border-b border-border/80 bg-white/80 backdrop-blur-xl shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <div className="mx-auto flex h-[70px] max-w-[1280px] items-center justify-between px-5 lg:px-8">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('home')}>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-indigo-600 to-blue-700 text-white shadow-md shadow-primary/25">
+              <Package size={20} strokeWidth={2.4} />
             </div>
             <div>
-              <span className="text-[17px] font-bold tracking-tight text-foreground">Lostly</span>
-              <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                AI Matcher
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[18px] font-extrabold tracking-tight text-foreground">Lostly</span>
+                <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                  AI Matcher
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground font-medium -mt-0.5">Campus Intelligence</p>
             </div>
           </div>
 
@@ -318,16 +326,16 @@ export default function Page() {
                     setView(id as View)
                   }
                 }}
-                className={`rounded-lg px-3.5 py-2 text-[13px] font-medium transition-all ${
+                className={`rounded-xl px-4 py-2 text-[13px] font-semibold transition-all ${
                   view === id
-                    ? 'bg-white text-foreground shadow-sm ring-1 ring-border'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-white text-foreground shadow-sm ring-1 ring-border/80'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                 }`}
               >
-                <Icon size={15} className="mr-2 inline" />
+                <Icon size={15} className="mr-2 inline text-primary" />
                 {label}
                 {id === 'reports' && reports.length > 0 && (
-                  <span className="ml-2 rounded-full bg-muted px-1.5 py-0.2 text-[11px] font-semibold">
+                  <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
                     {reports.length}
                   </span>
                 )}
@@ -335,16 +343,19 @@ export default function Page() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {/* Live API status */}
-            <div className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700 sm:flex">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="hidden items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1 text-[11px] font-semibold text-emerald-800 sm:flex shadow-2xs">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+              </span>
               API Connected
             </div>
 
             <button
               onClick={() => goReport('LOST')}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-95"
+              className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/25 hover:opacity-95 transition-all"
             >
               <Plus size={15} />
               Report Item
@@ -537,84 +548,113 @@ function Dashboard({
 
   return (
     <div className="space-y-8">
-      {/* Hero Greeting */}
-      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-            College Lost-and-Found AI System
-          </span>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Campus Matching Center
-          </h1>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Our explainable heuristic agent evaluates lost and found reports using Category (20%), Color (15%), Location (20%), Time (20%), and NLP Description (25%).
-          </p>
-        </div>
+      {/* Hero Greeting Card */}
+      <div className="relative overflow-hidden rounded-3xl border border-border/80 bg-gradient-to-b from-white via-white to-slate-50/50 p-6 sm:p-10 shadow-xs">
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary backdrop-blur-xs mb-3">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
+              </span>
+              Campus Intelligent Agent • 5-Factor Weighted Engine
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+              Campus Matching Center
+            </h1>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Deterministic heuristic matching cross-evaluating student Lost & Found reports across <span className="font-semibold text-foreground">Category (20%)</span>, <span className="font-semibold text-foreground">Color (15%)</span>, <span className="font-semibold text-foreground">Location (20%)</span>, <span className="font-semibold text-foreground">Time (20%)</span>, and <span className="font-semibold text-foreground">NLP Description Overlap (25%)</span>.
+            </p>
+          </div>
 
-        <div className="flex gap-2.5">
-          <button
-            onClick={() => onReport('LOST')}
-            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95"
-          >
-            <Search size={16} />
-            I Lost Something
-          </button>
-          <button
-            onClick={() => onReport('FOUND')}
-            className="flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted"
-          >
-            <Package size={16} />
-            I Found Something
-          </button>
+          <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
+            <button
+              onClick={() => onReport('LOST')}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-amber-500/20 hover:opacity-95 transition-all"
+            >
+              <Search size={17} />
+              I Lost Something
+            </button>
+            <button
+              onClick={() => onReport('FOUND')}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-emerald-600/20 hover:opacity-95 transition-all"
+            >
+              <Package size={17} />
+              I Found Something
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Metrics Row */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        {/* Total Active Reports */}
+        <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white p-6 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
             <span>Total Active Reports</span>
-            <FileText size={16} className="text-primary" />
-          </div>
-          <p className="mt-3 text-3xl font-bold text-foreground">{isLoading ? '...' : reports.length}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Synced in real-time with Supabase</p>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <span>Lost vs Found</span>
-            <Layers size={16} className="text-primary" />
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-amber-600">{lostCount}</span>
-            <span className="text-xs text-muted-foreground">Lost</span>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-3xl font-bold text-emerald-600">{foundCount}</span>
-            <span className="text-xs text-muted-foreground">Found</span>
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">Candidate pools cross-evaluated</p>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              <span>AI Matching Status</span>
-              <Sparkles size={16} className="text-primary" />
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+              <FileText size={16} />
             </div>
-            <p className="mt-3 text-lg font-bold text-emerald-600">
+          </div>
+          <p className="mt-4 text-4xl font-black tracking-tight text-foreground">{isLoading ? '...' : reports.length}</p>
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Synced in real-time with PostgreSQL</span>
+          </div>
+        </div>
+
+        {/* Lost vs Found */}
+        <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white p-6 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <span>Lost vs Found Ratio</span>
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+              <Layers size={16} />
+            </div>
+          </div>
+          <div className="mt-4 flex items-baseline gap-2">
+            <span className="text-4xl font-black text-amber-600">{lostCount}</span>
+            <span className="text-xs font-semibold text-muted-foreground">Lost</span>
+            <span className="text-muted-foreground/50">/</span>
+            <span className="text-4xl font-black text-emerald-600">{foundCount}</span>
+            <span className="text-xs font-semibold text-muted-foreground">Found</span>
+          </div>
+          {/* Visual Ratio Bar */}
+          <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              style={{ width: `${lostCount + foundCount > 0 ? (lostCount / (lostCount + foundCount)) * 100 : 50}%` }}
+              className="bg-amber-500 transition-all duration-500"
+            />
+            <div
+              style={{ width: `${lostCount + foundCount > 0 ? (foundCount / (lostCount + foundCount)) * 100 : 50}%` }}
+              className="bg-emerald-500 transition-all duration-500"
+            />
+          </div>
+        </div>
+
+        {/* AI Matching Status */}
+        <div className="group relative overflow-hidden rounded-2xl border border-border/80 bg-white p-6 shadow-xs hover:border-primary/40 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <span>AI Engine Status</span>
+              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+                <Sparkles size={16} />
+              </div>
+            </div>
+            <p className="mt-4 text-xl font-bold text-emerald-600 flex items-center gap-2">
+              <span className="size-2 rounded-full bg-emerald-500 animate-ping" />
               {topMatch ? `Best: ${topMatch.overall_score}% (${topMatch.decision})` : 'Engine Ready'}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {activeMatch ? `${activeMatch.candidates_evaluated} candidates evaluated` : 'Select any report to run matching'}
+              {activeMatch ? `${activeMatch.candidates_evaluated} opposite candidates evaluated` : '5-factor heuristic algorithm ready'}
             </p>
           </div>
           {!activeMatch && reports.length > 0 && (
             <button
               onClick={() => onTriggerMatch(reports[0])}
-              className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition-all"
+              className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 transition-all"
             >
               <Sparkles size={13} />
-              Run Demo Match on {reports[0].category} ({reports[0].type})
+              Run Demo Match ({reports[0].category})
             </button>
           )}
         </div>
@@ -622,22 +662,22 @@ function Dashboard({
 
       {/* Active Match Banner if present */}
       {topMatch && activeMatch && (
-        <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-5 sm:p-6">
+        <div className="rounded-3xl border border-primary/20 bg-gradient-to-r from-primary/[0.04] to-indigo-50/50 p-6 sm:p-7 shadow-xs">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div className="flex items-start gap-4">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border-2 border-primary/20 bg-white text-xl font-bold text-primary shadow-sm">
+              <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border-2 border-primary/30 bg-white text-2xl font-black text-primary shadow-sm">
                 {topMatch.overall_score}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
+                  <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
                     {topMatch.decision}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     Matched against {activeMatch.source_report.category} ({activeMatch.source_report.type})
                   </span>
                 </div>
-                <h3 className="mt-1 text-base font-bold text-foreground">
+                <h3 className="mt-1.5 text-lg font-bold text-foreground">
                   {topMatch.candidate_report.category} in {topMatch.candidate_report.location}
                 </h3>
                 <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
@@ -648,9 +688,9 @@ function Dashboard({
 
             <button
               onClick={() => onView('matches')}
-              className="flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-95"
+              className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 transition-all"
             >
-              Examine Match Decomposition <ChevronRight size={14} />
+              Examine Match Decomposition <ChevronRight size={15} />
             </button>
           </div>
         </div>
@@ -660,7 +700,7 @@ function Dashboard({
       <div>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold tracking-tight">Recent Campus Reports</h2>
+            <h2 className="text-xl font-bold tracking-tight text-foreground">Recent Campus Reports</h2>
             <p className="text-xs text-muted-foreground">Select any item to trigger the heuristic matching agent</p>
           </div>
           <button
@@ -671,84 +711,91 @@ function Dashboard({
           </button>
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+        <div className="mt-4 space-y-3">
           {isLoading ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">Loading reports from database...</div>
+            <div className="rounded-2xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">
+              Loading reports from database...
+            </div>
           ) : reports.length === 0 ? (
-            <div className="p-10 text-center">
-              <Package size={32} className="mx-auto text-muted-foreground/50" />
-              <p className="mt-2 text-sm font-semibold">No reports filed yet</p>
+            <div className="rounded-2xl border border-border bg-white p-12 text-center">
+              <Package size={36} className="mx-auto text-muted-foreground/40" />
+              <p className="mt-3 text-base font-bold">No reports filed yet</p>
               <p className="mt-1 text-xs text-muted-foreground">Get started by filing a lost or found report.</p>
               <button
                 onClick={() => onReport('LOST')}
-                className="mt-4 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+                className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground"
               >
                 Create First Report
               </button>
             </div>
           ) : (
-            <div className="divide-y divide-border">
-              {reports.slice(0, 5).map((r) => (
-                <div
-                  key={r.id}
-                  className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center sm:px-6"
-                >
-                  <div className="flex items-start gap-3">
-                    <span
-                      className={`mt-0.5 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                        r.type === 'LOST'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      {r.type}
-                    </span>
-                    <div>
-                      <h4 className="text-sm font-bold text-foreground">
-                        {r.category} {r.color ? `· ${r.color}` : ''}
-                      </h4>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MapPin size={12} /> {r.location}
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <Clock size={12} /> {new Date(r.date_time).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-1 text-xs text-muted-foreground/80">
-                        {r.description}
-                      </p>
-                    </div>
+            reports.slice(0, 6).map((r) => (
+              <div
+                key={r.id}
+                className="group flex flex-col justify-between gap-4 rounded-2xl border border-border/80 bg-white p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all sm:flex-row sm:items-center sm:px-6"
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`flex size-11 shrink-0 items-center justify-center rounded-xl font-black text-xs shadow-xs ${
+                      r.type === 'LOST'
+                        ? 'bg-gradient-to-br from-amber-50 to-orange-100 text-amber-800 border border-amber-200/80'
+                        : 'bg-gradient-to-br from-emerald-50 to-teal-100 text-emerald-800 border border-emerald-200/80'
+                    }`}
+                  >
+                    {r.type}
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onViewDetails(r)}
-                      className="flex items-center gap-1 rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-all shadow-sm"
-                      title="View full submitted report details"
-                    >
-                      <Eye size={13} />
-                      Details
-                    </button>
-                    <button
-                      onClick={() => onTriggerMatch(r)}
-                      className="flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition-all"
-                    >
-                      <Sparkles size={13} />
-                      Run AI Match
-                    </button>
-                    <button
-                      onClick={() => onDelete(r)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                      title="Delete report"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-base font-bold text-foreground">
+                        {r.category}
+                      </h4>
+                      {r.color && (
+                        <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          {r.color}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1 font-medium text-foreground/80">
+                        <MapPin size={12} className="text-primary" /> {r.location}
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Clock size={12} /> {new Date(r.date_time).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 line-clamp-1 text-xs text-muted-foreground/90 max-w-xl">
+                      {r.description}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    onClick={() => onViewDetails(r)}
+                    className="flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-all shadow-xs"
+                    title="View full submitted report details"
+                  >
+                    <Eye size={13} />
+                    Details
+                  </button>
+                  <button
+                    onClick={() => onTriggerMatch(r)}
+                    className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 transition-all"
+                  >
+                    <Sparkles size={13} />
+                    Run AI Match
+                  </button>
+                  <button
+                    onClick={() => onDelete(r)}
+                    className="rounded-xl p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                    title="Delete report"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -1101,36 +1148,44 @@ function ReportsView({
       </div>
 
       {/* Table / List */}
-      <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+      <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-border bg-white p-12 text-center text-sm text-muted-foreground shadow-xs">
             No matching reports found.
           </div>
         ) : (
-          <div className="divide-y divide-border">
-            {filtered.map((r) => (
-              <div key={r.id} className="p-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
-                        r.type === 'LOST'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      {r.type}
-                    </span>
-                    <h3 className="text-sm font-bold text-foreground">
-                      {r.category} {r.color ? `· ${r.color}` : ''}
+          filtered.map((r) => (
+            <div
+              key={r.id}
+              className="group flex flex-col justify-between gap-4 rounded-2xl border border-border/80 bg-white p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all sm:flex-row sm:items-center sm:px-6"
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className={`flex size-11 shrink-0 items-center justify-center rounded-xl font-black text-xs shadow-xs ${
+                    r.type === 'LOST'
+                      ? 'bg-gradient-to-br from-amber-50 to-orange-100 text-amber-800 border border-amber-200/80'
+                      : 'bg-gradient-to-br from-emerald-50 to-teal-100 text-emerald-800 border border-emerald-200/80'
+                  }`}
+                >
+                  {r.type}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-foreground">
+                      {r.category}
                     </h3>
+                    {r.color && (
+                      <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        {r.color}
+                      </span>
+                    )}
                   </div>
-
-                  <p className="text-xs text-muted-foreground">{r.description}</p>
-
-                  <div className="flex items-center gap-3 pt-1 text-[11px] text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <MapPin size={11} /> {r.location}
+                  <p className="mt-1 text-xs text-muted-foreground/90 max-w-xl line-clamp-2 leading-relaxed">
+                    {r.description}
+                  </p>
+                  <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1 font-medium text-foreground/80">
+                      <MapPin size={11} className="text-primary" /> {r.location}
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
@@ -1138,34 +1193,34 @@ function ReportsView({
                     </span>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onViewDetails(r)}
-                    className="flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-all shadow-sm"
-                    title="View full submitted details"
-                  >
-                    <Eye size={13} />
-                    View Details
-                  </button>
-                  <button
-                    onClick={() => onTriggerMatch(r)}
-                    className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition-all"
-                  >
-                    <Sparkles size={13} />
-                    Run AI Match
-                  </button>
-                  <button
-                    onClick={() => onDelete(r)}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                    title="Delete report"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
               </div>
-            ))}
-          </div>
+
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                <button
+                  onClick={() => onViewDetails(r)}
+                  className="flex items-center gap-1.5 rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-all shadow-xs"
+                  title="View full submitted details"
+                >
+                  <Eye size={13} />
+                  View Details
+                </button>
+                <button
+                  onClick={() => onTriggerMatch(r)}
+                  className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/20 hover:opacity-95 transition-all"
+                >
+                  <Sparkles size={13} />
+                  Run AI Match
+                </button>
+                <button
+                  onClick={() => onDelete(r)}
+                  className="rounded-xl p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                  title="Delete report"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>
