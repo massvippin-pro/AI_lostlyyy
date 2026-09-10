@@ -83,6 +83,66 @@ const CAMPUS_LOCATIONS = [
   'Other',
 ]
 
+function getLocalDateTimeString(d: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const yyyy = d.getFullYear()
+  const MM = pad(d.getMonth() + 1)
+  const dd = pad(d.getDate())
+  const hh = pad(d.getHours())
+  const mm = pad(d.getMinutes())
+  return `${yyyy}-${MM}-${dd}T${hh}:${mm}`
+}
+
+function extractSharedTokens(text1: string, text2: string): string[] {
+  const stopWords = new Set([
+    'a', 'an', 'the', 'in', 'on', 'at', 'with', 'and', 'or', 'for', 'of', 'to', 'from',
+    'by', 'is', 'was', 'it', 'its', 'near', 'found', 'lost', 'item', 'my', 'left', 'some',
+    'this', 'that', 'there', 'here', 'set', 'into', 'over', 'room', 'area',
+  ])
+  const tokenize = (t: string) =>
+    (t.toLowerCase().match(/[a-z0-9]+/g) || []).filter((w) => w.length > 2 && !stopWords.has(w))
+
+  const tokens1 = new Set(tokenize(text1))
+  const tokens2 = tokenize(text2)
+  const shared = new Set<string>()
+  for (const tok of tokens2) {
+    if (tokens1.has(tok)) {
+      shared.add(tok)
+    }
+  }
+  return Array.from(shared).slice(0, 8)
+}
+
+const DEMO_SCENARIOS = [
+  {
+    title: '🔑 Lost Keys (Spider-Man)',
+    tag: 'Matches Library Found Keys (>90%)',
+    type: 'LOST' as ReportType,
+    category: 'Keys',
+    color: 'Red',
+    location: 'Library',
+    description: 'Lost a set of room keys with a red Spider-Man keychain and silver ring near the 2nd floor study area.',
+  },
+  {
+    title: '🎧 Found AirPods Pro',
+    tag: 'Location & NLP Match Demo',
+    type: 'FOUND' as ReportType,
+    category: 'Electronics',
+    color: 'White',
+    location: 'Cafeteria',
+    description: 'Found Apple AirPods Pro 2nd Gen inside a matte black silicone case with a carabiner clip on table #14.',
+  },
+  {
+    title: '💻 Lost MacBook Air',
+    tag: 'High Value Student Asset',
+    type: 'LOST' as ReportType,
+    category: 'Laptop',
+    color: 'Silver',
+    location: 'Computer Lab',
+    description: 'Silver 13-inch M2 MacBook Air with GitHub Octocat and React stickers on top cover. Left near terminal 18.',
+  },
+]
+
 export default function Page() {
   const [view, setView] = useState<View>('home')
   const [mobileNav, setMobileNav] = useState(false)
@@ -107,7 +167,7 @@ export default function Page() {
     category: 'Mobile Phone',
     color: 'Black',
     location: 'Library',
-    date_time: new Date().toISOString().slice(0, 16), // YYYY-MM-DDTHH:MM
+    date_time: getLocalDateTimeString(),
     description: 'Black Samsung Galaxy S23 with a cracked screen and blue protective case.',
   })
 
@@ -182,6 +242,10 @@ export default function Page() {
   const [reportToDelete, setReportToDelete] = useState<Report | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [claimHandoverData, setClaimHandoverData] = useState<{
+    source: Report
+    candidate: CandidateMatch
+  } | null>(null)
 
   function showToast(type: 'success' | 'error', text: string) {
     setToastMessage({ type, text })
@@ -360,6 +424,9 @@ export default function Page() {
             onSelectCandidate={setSelectedCandidate}
             onBack={() => setView('home')}
             onNavigateReport={() => goReport('LOST')}
+            onInitiateClaim={(source, candidate) => {
+              setClaimHandoverData({ source, candidate })
+            }}
           />
         )}
       </main>
@@ -388,6 +455,15 @@ export default function Page() {
             if (!isDeleting) setReportToDelete(null)
           }}
           onConfirm={handleConfirmDelete}
+        />
+      )}
+
+      {/* Campus Handover & Claim Pass Modal */}
+      {claimHandoverData && (
+        <ClaimHandoverModal
+          sourceReport={claimHandoverData.source}
+          candidate={claimHandoverData.candidate}
+          onClose={() => setClaimHandoverData(null)}
         />
       )}
 
@@ -704,6 +780,38 @@ function ReportForm({
       )}
 
       <form onSubmit={onSubmit} className="space-y-6">
+        {/* Quick Demo Scenarios */}
+        <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-4">
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-primary">
+              <Sparkles size={14} /> Quick Demo Presets (1-Click Fill)
+            </span>
+            <span className="text-[10px] text-muted-foreground font-medium">Click to auto-populate</span>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {DEMO_SCENARIOS.map((sc) => (
+              <button
+                key={sc.title}
+                type="button"
+                onClick={() => {
+                  setType(sc.type)
+                  setForm({
+                    category: sc.category,
+                    color: sc.color,
+                    location: sc.location,
+                    date_time: getLocalDateTimeString(),
+                    description: sc.description,
+                  })
+                }}
+                className="rounded-xl border border-border bg-white p-2.5 text-left shadow-xs hover:border-primary hover:bg-primary/[0.04] transition-all"
+              >
+                <p className="text-xs font-bold text-foreground">{sc.title}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{sc.tag}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Type Toggle */}
         <div className="flex rounded-xl border border-border bg-white p-1.5 shadow-sm">
           <button
@@ -1052,6 +1160,7 @@ function MatchesView({
   onSelectCandidate,
   onBack,
   onNavigateReport,
+  onInitiateClaim,
 }: {
   matchResponse: MatchResponse | null
   selectedCandidate: CandidateMatch | null
@@ -1060,6 +1169,7 @@ function MatchesView({
   onSelectCandidate: (c: CandidateMatch) => void
   onBack: () => void
   onNavigateReport: () => void
+  onInitiateClaim: (source: Report, candidate: CandidateMatch) => void
 }) {
   if (isLoading) {
     return (
@@ -1224,7 +1334,11 @@ function MatchesView({
 
           {/* Candidate Explanation Detail Column */}
           {selectedCandidate ? (
-            <CandidateDetailCard candidate={selectedCandidate} />
+            <SideBySideMatchInspector
+              sourceReport={source_report}
+              candidate={selectedCandidate}
+              onInitiateClaim={onInitiateClaim}
+            />
           ) : (
             <div className="flex h-64 items-center justify-center rounded-2xl border border-border bg-white p-6 text-center text-xs text-muted-foreground">
               Select a candidate match to inspect its explainability breakdown
@@ -1237,130 +1351,281 @@ function MatchesView({
 }
 
 /* ==============================================================================
-   CANDIDATE EXPLANATION DETAIL CARD
+   SIDE-BY-SIDE MATCH INSPECTOR (ACADEMIC EXPLAINABILITY)
    ============================================================================== */
-function CandidateDetailCard({ candidate }: { candidate: CandidateMatch }) {
+function SideBySideMatchInspector({
+  sourceReport,
+  candidate,
+  onInitiateClaim,
+}: {
+  sourceReport: Report
+  candidate: CandidateMatch
+  onInitiateClaim: (source: Report, candidate: CandidateMatch) => void
+}) {
   const { candidate_report, overall_score, decision, factors, explanation } = candidate
   const isMatch = decision === 'MATCH'
   const isReview = decision === 'REVIEW'
+  const sharedTokens = extractSharedTokens(sourceReport.description, candidate_report.description)
 
   return (
-    <div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`rounded px-2.5 py-1 text-xs font-bold ${
-                isMatch
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : isReview
-                  ? 'bg-amber-100 text-amber-800'
-                  : 'bg-slate-100 text-slate-700'
-              }`}
-            >
-              {decision === 'MATCH' ? 'HIGH CONFIDENCE MATCH' : decision === 'REVIEW' ? 'MANUAL REVIEW RECOMMENDED' : 'LOW COMPATIBILITY'}
-            </span>
+    <div className="space-y-6">
+      {/* Top Banner & Decision */}
+      <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <div className="flex items-center gap-2">
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                  isMatch
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : isReview
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-slate-100 text-slate-700'
+                }`}
+              >
+                {decision === 'MATCH'
+                  ? 'HIGH CONFIDENCE MATCH'
+                  : decision === 'REVIEW'
+                  ? 'MANUAL REVIEW RECOMMENDED'
+                  : 'LOW COMPATIBILITY'}
+              </span>
+              <span className="text-xs text-muted-foreground">Deterministic Heuristic AI</span>
+            </div>
+            <h3 className="mt-2 text-xl font-bold text-foreground">
+              Candidate #{candidate_report.id.slice(0, 6)} Compatibility
+            </h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Cross-evaluated across 5 weighted academic heuristic dimensions
+            </p>
           </div>
 
-          <h3 className="mt-2 text-xl font-bold text-foreground">
-            {candidate_report.category} {candidate_report.color ? `· ${candidate_report.color}` : ''}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            Location: {candidate_report.location} · {new Date(candidate_report.date_time).toLocaleString()}
-          </p>
+          <div className="flex size-20 shrink-0 flex-col items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
+            <span className="text-3xl font-black leading-none">{overall_score}</span>
+            <span className="mt-1 text-[9px] font-bold uppercase tracking-widest opacity-80">/ 100</span>
+          </div>
         </div>
 
-        <div className="flex size-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
-          <span className="text-2xl font-black">{overall_score}</span>
-          <span className="text-[9px] uppercase tracking-wider opacity-80">/ 100</span>
-        </div>
-      </div>
-
-      {/* AI Summary Banner */}
-      <div className="rounded-xl bg-muted/60 p-4 text-xs leading-relaxed text-foreground">
-        <span className="font-semibold text-primary block mb-0.5">AI Agent Assessment:</span>
-        {explanation.summary}
-      </div>
-
-      {/* Factor-by-Factor Sub-Scores */}
-      <div className="space-y-3">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Heuristic Factor Breakdown
-        </h4>
-
-        <div className="space-y-2.5">
-          <FactorBar label="Category Affinity" weight="20%" score={factors.category} />
-          <FactorBar label="Color Compatibility" weight="15%" score={factors.color} />
-          <FactorBar label="Campus Location Proximity" weight="20%" score={factors.location} />
-          <FactorBar label="Chronological Compatibility" weight="20%" score={factors.time} />
-          <FactorBar label="NLP Description Overlap" weight="25%" score={factors.description} />
+        {/* AI Summary Banner */}
+        <div className="mt-4 rounded-xl bg-muted/60 p-4 text-xs leading-relaxed text-foreground">
+          <span className="font-semibold text-primary block mb-0.5">AI Agent Assessment:</span>
+          {explanation.summary}
         </div>
       </div>
 
-      {/* Positive Reasons */}
-      {explanation.reasons && explanation.reasons.length > 0 && (
-        <div className="space-y-1.5">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-            Positive Evidence Corroboration
+      {/* Side-by-Side Comparison Grid */}
+      <div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Side-by-Side Attribute Comparison
           </h4>
-          <ul className="space-y-1 text-xs text-foreground">
-            {explanation.reasons.map((r, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-600" />
-                <span>{r}</span>
-              </li>
-            ))}
-          </ul>
+          <span className="text-[11px] text-muted-foreground">Source vs Candidate</span>
         </div>
-      )}
 
-      {/* Negative Factors / Penalties */}
-      {explanation.negative_factors && explanation.negative_factors.length > 0 && (
-        <div className="space-y-1.5">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-amber-700">
-            Penalties / Discrepancies
-          </h4>
-          <ul className="space-y-1 text-xs text-muted-foreground">
-            {explanation.negative_factors.map((nf, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <AlertCircle size={14} className="mt-0.5 shrink-0 text-amber-600" />
-                <span>{nf}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Source Column */}
+          <div className="rounded-xl border border-border bg-background p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span
+                className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                  sourceReport.type === 'LOST'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                Your Report: {sourceReport.type}
+              </span>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Item Category & Color
+              </span>
+              <p className="text-sm font-bold text-foreground">
+                {sourceReport.category} {sourceReport.color ? `· ${sourceReport.color}` : ''}
+              </p>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Campus Location
+              </span>
+              <p className="text-xs font-semibold text-foreground flex items-center gap-1">
+                <MapPin size={12} className="text-primary" />
+                {sourceReport.location}
+              </p>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Reported Incident Time
+              </span>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock size={12} />
+                {new Date(sourceReport.date_time).toLocaleString()}
+              </p>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                User Submitted Description
+              </span>
+              <p className="rounded-lg bg-white p-2.5 text-xs text-muted-foreground border border-border leading-relaxed">
+                {sourceReport.description}
+              </p>
+            </div>
+          </div>
+
+          {/* Candidate Column */}
+          <div className="rounded-xl border border-border bg-background p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span
+                className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                  candidate_report.type === 'LOST'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                Candidate Match: {candidate_report.type}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-mono">
+                {candidate_report.id.slice(0, 8)}...
+              </span>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Item Category & Color
+              </span>
+              <p className="text-sm font-bold text-foreground">
+                {candidate_report.category} {candidate_report.color ? `· ${candidate_report.color}` : ''}
+              </p>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Campus Location
+              </span>
+              <p className="text-xs font-semibold text-foreground flex items-center gap-1">
+                <MapPin size={12} className="text-primary" />
+                {candidate_report.location}
+              </p>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Reported Incident Time
+              </span>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock size={12} />
+                {new Date(candidate_report.date_time).toLocaleString()}
+              </p>
+            </div>
+
+            <div>
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                User Submitted Description
+              </span>
+              <p className="rounded-lg bg-white p-2.5 text-xs text-muted-foreground border border-border leading-relaxed">
+                {candidate_report.description}
+              </p>
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Notes (e.g. missing color neutral baseline) */}
-      {explanation.notes && explanation.notes.length > 0 && (
-        <div className="space-y-1 text-xs text-muted-foreground border-t border-border pt-3">
-          {explanation.notes.map((n, i) => (
-            <p key={i} className="flex items-center gap-1.5 text-[11px]">
-              <Info size={13} className="text-primary shrink-0" />
-              <span>{n}</span>
-            </p>
-          ))}
-        </div>
-      )}
-
-      {/* Candidate Description */}
-      <div className="border-t border-border pt-4">
-        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Report Description
-        </span>
-        <p className="mt-1 text-xs text-foreground leading-relaxed">
-          {candidate_report.description}
-        </p>
+        {/* NLP Shared Tokens Proof */}
+        {sharedTokens.length > 0 && (
+          <div className="rounded-xl bg-primary/[0.04] border border-primary/20 p-3.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-primary flex items-center gap-1.5">
+                <Sparkles size={14} /> Shared NLP Keywords Extracted ({sharedTokens.length})
+              </span>
+              <span className="text-[10px] text-muted-foreground">Weight: 25% in heuristic</span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {sharedTokens.map((tok) => (
+                <span
+                  key={tok}
+                  className="rounded-md bg-white px-2 py-0.5 text-xs font-semibold text-primary border border-primary/30 shadow-xs"
+                >
+                  #{tok}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Claim Action */}
-      <button
-        onClick={() => alert(`Connection request initiated for ${candidate_report.category} at ${candidate_report.location}!`)}
-        className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95 transition-all"
-      >
-        Initiate Item Return / Claim
-      </button>
+      {/* Heuristic Factors & Evidence */}
+      <div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-6">
+        <div className="space-y-3">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Heuristic Factor Sub-Scores
+          </h4>
+
+          <div className="space-y-2.5">
+            <FactorBar label="Category Affinity" weight="20%" score={factors.category} />
+            <FactorBar label="Color Compatibility" weight="15%" score={factors.color} />
+            <FactorBar label="Campus Location Proximity" weight="20%" score={factors.location} />
+            <FactorBar label="Chronological Compatibility" weight="20%" score={factors.time} />
+            <FactorBar label="NLP Description Overlap" weight="25%" score={factors.description} />
+          </div>
+        </div>
+
+        {/* Positive Reasons */}
+        {explanation.reasons && explanation.reasons.length > 0 && (
+          <div className="space-y-1.5 border-t border-border pt-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+              Positive Evidence Corroboration
+            </h4>
+            <ul className="space-y-1 text-xs text-foreground">
+              {explanation.reasons.map((r, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-600" />
+                  <span>{r}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Penalties / Discrepancies */}
+        {explanation.negative_factors && explanation.negative_factors.length > 0 && (
+          <div className="space-y-1.5 border-t border-border pt-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-700">
+              Penalties / Discrepancies
+            </h4>
+            <ul className="space-y-1 text-xs text-muted-foreground">
+              {explanation.negative_factors.map((nf, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <AlertCircle size={14} className="mt-0.5 shrink-0 text-amber-600" />
+                  <span>{nf}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Notes */}
+        {explanation.notes && explanation.notes.length > 0 && (
+          <div className="space-y-1 text-xs text-muted-foreground border-t border-border pt-3">
+            {explanation.notes.map((n, i) => (
+              <p key={i} className="flex items-center gap-1.5 text-[11px]">
+                <Info size={13} className="text-primary shrink-0" />
+                <span>{n}</span>
+              </p>
+            ))}
+          </div>
+        )}
+
+        {/* Claim Action Button */}
+        <button
+          onClick={() => onInitiateClaim(sourceReport, candidate)}
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-95 transition-all"
+        >
+          <ShieldCheck size={17} />
+          Initiate Item Return / Claim Pass
+        </button>
+      </div>
     </div>
   )
 }
@@ -1670,6 +1935,192 @@ function DeleteConfirmationModal({
             )}
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+/* ==============================================================================
+   CAMPUS CLAIM & HANDOVER PASS MODAL
+   ============================================================================== */
+function ClaimHandoverModal({
+  sourceReport,
+  candidate,
+  onClose,
+}: {
+  sourceReport: Report
+  candidate: CandidateMatch
+  onClose: () => void
+}) {
+  const [verificationNote, setVerificationNote] = useState('')
+  const [handoverStation, setHandoverStation] = useState('Central Campus Security Desk (Main Gate)')
+  const [generatedPass, setGeneratedPass] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const handleGeneratePass = (e: React.FormEvent) => {
+    e.preventDefault()
+    const randomCode = `PASS-${Math.floor(1000 + Math.random() * 9000)}`
+    setGeneratedPass(randomCode)
+  }
+
+  const handleCopyPass = () => {
+    if (generatedPass) {
+      navigator.clipboard.writeText(generatedPass)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+      <div
+        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-white p-6 shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-xl p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        >
+          <X size={18} />
+        </button>
+
+        {!generatedPass ? (
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <ShieldCheck size={22} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Initiate Item Handover</h3>
+                <p className="text-xs text-muted-foreground">Campus Security & Claim Verification Pass</p>
+              </div>
+            </div>
+
+            {/* Matched Summary */}
+            <div className="mt-4 rounded-xl border border-border bg-muted/40 p-3.5 text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-foreground">Matched Item:</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                  {candidate.overall_score}% Compatibility Match
+                </span>
+              </div>
+              <p className="text-muted-foreground">
+                <strong className="text-foreground">{candidate.candidate_report.category}</strong> ({candidate.candidate_report.color || 'No color specified'}) reported at {candidate.candidate_report.location}
+              </p>
+            </div>
+
+            <form onSubmit={handleGeneratePass} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  Private Ownership Verification Detail *
+                </label>
+                <textarea
+                  required
+                  rows={2}
+                  value={verificationNote}
+                  onChange={(e) => setVerificationNote(e.target.value)}
+                  placeholder="State an unmentioned identifying detail (e.g. scratch, lock screen wallpaper, keychain detail, or contents inside)..."
+                  className="w-full resize-none rounded-xl border border-border bg-background p-3 text-xs focus:border-primary focus:bg-white"
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Campus staff/security verifies this detail before handing over the item.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  Designated Safe Handover Station *
+                </label>
+                <select
+                  value={handoverStation}
+                  onChange={(e) => setHandoverStation(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-border bg-background p-2.5 text-xs font-medium focus:border-primary focus:bg-white"
+                >
+                  <option value="Central Campus Security Desk (Main Gate)">
+                    🏢 Central Campus Security Desk (Main Gate)
+                  </option>
+                  <option value="University Library 1st Floor Helpdesk">
+                    📚 University Library 1st Floor Helpdesk
+                  </option>
+                  <option value="Student Affairs Office (Admin Block, Room 102)">
+                    🏛️ Student Affairs Office (Admin Block, Room 102)
+                  </option>
+                </select>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-2.5 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-xl border border-border bg-white px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-95"
+                >
+                  <ShieldCheck size={14} />
+                  Issue Campus Handover Pass
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <div className="text-center py-2 space-y-4">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shadow-sm">
+              <CheckCircle2 size={32} />
+            </div>
+
+            <div>
+              <span className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                Official Campus Claim Pass Issued
+              </span>
+              <h3 className="mt-2 text-xl font-bold text-foreground">Handover Pass Authorized</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Present this verification code at the campus handover desk to claim your item.
+              </p>
+            </div>
+
+            {/* Pass Code Card */}
+            <div className="rounded-2xl border-2 border-dashed border-primary/40 bg-primary/[0.04] p-5">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                Handover Verification Code
+              </span>
+              <div className="mt-1 flex items-center justify-center gap-3">
+                <span className="font-mono text-3xl font-black tracking-wider text-foreground">
+                  {generatedPass}
+                </span>
+                <button
+                  onClick={handleCopyPass}
+                  className="rounded-lg border border-border bg-white p-2 text-muted-foreground hover:text-foreground shadow-xs"
+                  title="Copy pass code"
+                >
+                  {copied ? <Check size={16} className="text-emerald-600" /> : <Copy size={16} />}
+                </button>
+              </div>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                📍 Location: <strong className="text-foreground">{handoverStation}</strong>
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-muted/60 p-3 text-left text-xs text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground">Next Steps for Demo / Pickup:</p>
+              <p>• Visit {handoverStation} with your student ID card.</p>
+              <p>• Provide pass code <strong>{generatedPass}</strong> and state your verification detail.</p>
+              <p>• Campus staff will verify against the log and close both reports.</p>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-full rounded-xl bg-primary py-2.5 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-95"
+            >
+              Done & Return to Match Center
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
