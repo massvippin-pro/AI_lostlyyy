@@ -1,6 +1,7 @@
 {
   "name": "my-project",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "description": "AI Lost and Found Matcher Frontend",
   "private": true,
   "scripts": {
     "dev": "next dev",
