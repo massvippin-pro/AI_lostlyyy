@@ -28,6 +28,11 @@ import {
   Layers,
   Info,
   ExternalLink,
+  Eye,
+  Copy,
+  Check,
+  Tag,
+  Calendar,
 } from 'lucide-react'
 import { listReports, createReport, deleteReport } from '@/lib/api/reports'
 import { runMatching } from '@/lib/api/matches'
@@ -172,19 +177,47 @@ export default function Page() {
     }
   }
 
-  // Delete report
-  async function handleDeleteReport(id: string) {
-    if (!confirm('Are you sure you want to remove this report?')) return
+  // Modals and feedback state
+  const [selectedReportForDetails, setSelectedReportForDetails] = useState<Report | null>(null)
+  const [reportToDelete, setReportToDelete] = useState<Report | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  function showToast(type: 'success' | 'error', text: string) {
+    setToastMessage({ type, text })
+    setTimeout(() => {
+      setToastMessage((cur) => (cur?.text === text ? null : cur))
+    }, 4500)
+  }
+
+  function onRequestDeleteReport(report: Report) {
+    setReportToDelete(report)
+  }
+
+  async function handleConfirmDelete() {
+    if (!reportToDelete) return
+    setIsDeleting(true)
     try {
-      await deleteReport(id)
-      setReports((prev) => prev.filter((r) => r.id !== id))
-      if (activeMatchResponse?.source_report.id === id) {
+      await deleteReport(reportToDelete.id)
+      setReports((prev) => prev.filter((r) => r.id !== reportToDelete.id))
+      if (activeMatchResponse?.source_report.id === reportToDelete.id) {
         setActiveMatchResponse(null)
         setSelectedCandidate(null)
       }
+      if (selectedReportForDetails?.id === reportToDelete.id) {
+        setSelectedReportForDetails(null)
+      }
+      showToast('success', `Deleted report for "${reportToDelete.category}" (${reportToDelete.location})`)
+      setReportToDelete(null)
     } catch (err: any) {
-      alert(`Could not delete report: ${err.message}`)
+      showToast('error', `Failed to delete report: ${err.message || 'Unknown error'}`)
+    } finally {
+      setIsDeleting(false)
     }
+  }
+
+  function handleViewDetails(report: Report) {
+    setSelectedReportForDetails(report)
   }
 
   const goReport = (type: ReportType) => {
@@ -285,6 +318,8 @@ export default function Page() {
             onReport={goReport}
             onView={setView}
             onTriggerMatch={handleTriggerMatch}
+            onViewDetails={handleViewDetails}
+            onDelete={onRequestDeleteReport}
             activeMatch={activeMatchResponse}
           />
         )}
@@ -310,7 +345,8 @@ export default function Page() {
             onRefresh={loadReports}
             onReport={goReport}
             onTriggerMatch={handleTriggerMatch}
-            onDelete={handleDeleteReport}
+            onViewDetails={handleViewDetails}
+            onDelete={onRequestDeleteReport}
             onBack={() => setView('home')}
           />
         )}
@@ -327,6 +363,60 @@ export default function Page() {
           />
         )}
       </main>
+
+      {/* View Details Modal */}
+      {selectedReportForDetails && (
+        <ReportDetailsModal
+          report={selectedReportForDetails}
+          onClose={() => setSelectedReportForDetails(null)}
+          onTriggerMatch={(r) => {
+            setSelectedReportForDetails(null)
+            handleTriggerMatch(r)
+          }}
+          onDelete={(r) => {
+            setReportToDelete(r)
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {reportToDelete && (
+        <DeleteConfirmationModal
+          report={reportToDelete}
+          isDeleting={isDeleting}
+          onCancel={() => {
+            if (!isDeleting) setReportToDelete(null)
+          }}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-border bg-white px-5 py-4 shadow-xl">
+          <div
+            className={`flex size-8 items-center justify-center rounded-xl ${
+              toastMessage.type === 'success'
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-red-100 text-red-700'
+            }`}
+          >
+            {toastMessage.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+          </div>
+          <div className="max-w-xs text-xs">
+            <p className="font-semibold text-foreground">
+              {toastMessage.type === 'success' ? 'Action Completed' : 'Operation Failed'}
+            </p>
+            <p className="text-muted-foreground mt-0.5">{toastMessage.text}</p>
+          </div>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="ml-2 rounded-lg p-1 text-muted-foreground hover:bg-muted transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -340,6 +430,8 @@ function Dashboard({
   onReport,
   onView,
   onTriggerMatch,
+  onViewDetails,
+  onDelete,
   activeMatch,
 }: {
   reports: Report[]
@@ -347,6 +439,8 @@ function Dashboard({
   onReport: (type: ReportType) => void
   onView: (view: View) => void
   onTriggerMatch: (r: Report) => void
+  onViewDetails: (r: Report) => void
+  onDelete: (r: Report) => void
   activeMatch: MatchResponse | null
 }) {
   const lostCount = reports.filter((r) => r.type === 'LOST').length
@@ -531,11 +625,26 @@ function Dashboard({
 
                   <div className="flex items-center gap-2">
                     <button
+                      onClick={() => onViewDetails(r)}
+                      className="flex items-center gap-1 rounded-lg border border-border bg-white px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-all shadow-sm"
+                      title="View full submitted report details"
+                    >
+                      <Eye size={13} />
+                      Details
+                    </button>
+                    <button
                       onClick={() => onTriggerMatch(r)}
-                      className="flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition-all"
+                      className="flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition-all"
                     >
                       <Sparkles size={13} />
                       Run AI Match
+                    </button>
+                    <button
+                      onClick={() => onDelete(r)}
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                      title="Delete report"
+                    >
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
@@ -755,6 +864,7 @@ function ReportsView({
   onRefresh,
   onReport,
   onTriggerMatch,
+  onViewDetails,
   onDelete,
   onBack,
 }: {
@@ -764,7 +874,8 @@ function ReportsView({
   onRefresh: () => void
   onReport: (type: ReportType) => void
   onTriggerMatch: (r: Report) => void
-  onDelete: (id: string) => void
+  onViewDetails: (r: Report) => void
+  onDelete: (r: Report) => void
   onBack: () => void
 }) {
   const [filterType, setFilterType] = useState<'ALL' | 'LOST' | 'FOUND'>('ALL')
@@ -899,6 +1010,14 @@ function ReportsView({
 
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => onViewDetails(r)}
+                    className="flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-all shadow-sm"
+                    title="View full submitted details"
+                  >
+                    <Eye size={13} />
+                    View Details
+                  </button>
+                  <button
                     onClick={() => onTriggerMatch(r)}
                     className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white transition-all"
                   >
@@ -906,8 +1025,8 @@ function ReportsView({
                     Run AI Match
                   </button>
                   <button
-                    onClick={() => onDelete(r.id)}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                    onClick={() => onDelete(r)}
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
                     title="Delete report"
                   >
                     <Trash2 size={15} />
@@ -1261,6 +1380,296 @@ function FactorBar({ label, weight, score }: { label: string; weight: string; sc
           className="h-full rounded-full bg-primary transition-all duration-500"
           style={{ width: `${percentage}%` }}
         />
+      </div>
+    </div>
+  )
+}
+
+/* ==============================================================================
+   REPORT DETAILS MODAL
+   ============================================================================== */
+function ReportDetailsModal({
+  report,
+  onClose,
+  onTriggerMatch,
+  onDelete,
+}: {
+  report: Report
+  onClose: () => void
+  onTriggerMatch: (r: Report) => void
+  onDelete: (r: Report) => void
+}) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(report.id)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const formattedDate = new Date(report.date_time).toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+  const formattedTime = new Date(report.date_time).toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+
+  const formattedCreated = new Date(report.created_at).toLocaleString()
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div
+        className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-white p-6 shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-xl p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          aria-label="Close details"
+        >
+          <X size={18} />
+        </button>
+
+        {/* Header */}
+        <div className="flex items-start gap-3.5 pr-8">
+          <div
+            className={`flex size-11 shrink-0 items-center justify-center rounded-xl font-bold text-sm shadow-sm ${
+              report.type === 'LOST'
+                ? 'bg-amber-100 text-amber-800'
+                : 'bg-emerald-100 text-emerald-800'
+            }`}
+          >
+            {report.type === 'LOST' ? <Search size={20} /> : <Package size={20} />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  report.type === 'LOST'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                {report.type} ITEM REPORT
+              </span>
+              <span className="text-xs text-muted-foreground">ID: {report.id.slice(0, 8)}...</span>
+            </div>
+            <h2 className="mt-1 text-xl font-bold text-foreground">
+              {report.category}
+              {report.color ? <span className="font-normal text-muted-foreground"> · {report.color}</span> : ''}
+            </h2>
+          </div>
+        </div>
+
+        {/* Structured Details Grid */}
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-border bg-background p-3.5">
+            <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Category
+            </span>
+            <p className="mt-1 text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Tag size={14} className="text-primary" />
+              {report.category}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background p-3.5">
+            <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Color Descriptor
+            </span>
+            <p className="mt-1 text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Palette size={14} className="text-primary" />
+              {report.color || <span className="text-muted-foreground italic font-normal">None specified</span>}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background p-3.5">
+            <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Campus Location
+            </span>
+            <p className="mt-1 text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <MapPin size={14} className="text-primary" />
+              {report.location}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background p-3.5">
+            <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Incident Date & Time
+            </span>
+            <div className="mt-1 text-xs font-semibold text-foreground flex items-center gap-1.5">
+              <Calendar size={14} className="text-primary shrink-0" />
+              <div className="truncate">
+                <span>{formattedDate}</span>
+                <span className="ml-1 text-muted-foreground">({formattedTime})</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Full Description Section */}
+        <div className="mt-4">
+          <label className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+            Full Submitted Description
+          </label>
+          <div className="rounded-xl border border-border bg-background p-4 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+            {report.description}
+          </div>
+        </div>
+
+        {/* System & Metadata Footer */}
+        <div className="mt-4 rounded-xl bg-muted/50 p-3.5 text-xs text-muted-foreground space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-foreground">Full Report UUID:</span>
+            <button
+              onClick={handleCopyId}
+              className="flex items-center gap-1 rounded-md bg-white px-2 py-1 text-[11px] font-medium text-foreground shadow-sm hover:bg-muted transition-all border border-border"
+              title="Copy UUID to clipboard"
+            >
+              {copied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+              <span>{copied ? 'Copied' : 'Copy UUID'}</span>
+            </button>
+          </div>
+          <p className="font-mono text-[11px] break-all select-all text-muted-foreground/90">
+            {report.id}
+          </p>
+
+          <div className="flex flex-wrap items-center justify-between pt-1 border-t border-border/60 text-[11px]">
+            <span>Submitted: {formattedCreated}</span>
+            <span className="flex items-center gap-1 text-emerald-700 font-medium">
+              <span className="size-1.5 rounded-full bg-emerald-500" />
+              Active in Supabase Database
+            </span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+          <button
+            onClick={() => {
+              onClose()
+              onDelete(report)
+            }}
+            className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={15} />
+            Delete Report
+          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="rounded-xl border border-border bg-white px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                onClose()
+                onTriggerMatch(report)
+              }}
+              className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-95 transition-opacity"
+            >
+              <Sparkles size={14} />
+              Run AI Match
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ==============================================================================
+   DELETE CONFIRMATION MODAL
+   ============================================================================== */
+function DeleteConfirmationModal({
+  report,
+  isDeleting,
+  onCancel,
+  onConfirm,
+}: {
+  report: Report
+  isDeleting: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+      <div
+        className="w-full max-w-md rounded-2xl border border-border bg-white p-6 shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex size-12 items-center justify-center rounded-2xl bg-red-100 text-red-600">
+          <Trash2 size={24} />
+        </div>
+
+        <h3 className="mt-4 text-lg font-bold text-foreground">Delete Report?</h3>
+        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+          Are you sure you want to permanently delete this report? This will remove it from the Supabase PostgreSQL database and eliminate it from AI candidate matching calculations.
+        </p>
+
+        {/* Report Preview */}
+        <div className="mt-4 rounded-xl border border-border bg-muted/40 p-3.5 text-xs">
+          <div className="flex items-center gap-2">
+            <span
+              className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                report.type === 'LOST'
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {report.type}
+            </span>
+            <span className="font-bold text-foreground">
+              {report.category} {report.color ? `· ${report.color}` : ''}
+            </span>
+          </div>
+          <p className="mt-1 text-muted-foreground flex items-center gap-1">
+            <MapPin size={11} /> {report.location} · {new Date(report.date_time).toLocaleDateString()}
+          </p>
+          <p className="mt-1 line-clamp-2 text-muted-foreground italic">
+            &quot;{report.description}&quot;
+          </p>
+        </div>
+
+        {/* Modal Actions */}
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            disabled={isDeleting}
+            onClick={onCancel}
+            className="rounded-xl border border-border bg-white px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={isDeleting}
+            onClick={onConfirm}
+            className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-red-700 transition-colors disabled:opacity-50"
+          >
+            {isDeleting ? (
+              <>
+                <RefreshCw size={14} className="animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 size={14} />
+                Delete Permanently
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   )
