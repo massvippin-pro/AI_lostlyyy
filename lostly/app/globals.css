@@ -21,7 +21,15 @@
 }
 :root { color-scheme: light; --background: #f7f8fa; --foreground: #172033; --card: #fff; --card-foreground: #172033; --primary: #3157d5; --primary-foreground: #fff; --muted: #eef1f5; --muted-foreground: #687386; --border: #e2e6ed; --ring: #3157d5; --success: #27845a; --warning: #a66d12; }
 * { @apply border-border outline-ring/40; }
-body { @apply bg-background text-foreground font-sans; }
+html {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+body {
+  overflow-x: hidden;
+  min-height: 100vh;
+  @apply bg-background text-foreground font-sans;
+}
 button, a, input, select, textarea { transition: border-color .2s, background-color .2s, color .2s, box-shadow .2s, transform .2s; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ring) 28%, transparent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }

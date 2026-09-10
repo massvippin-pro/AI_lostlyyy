@@ -291,14 +291,16 @@ export default function Page() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground overflow-x-hidden selection:bg-primary/20 selection:text-primary">
-      {/* Ambient background glows */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[550px] w-[1100px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-primary/15 via-indigo-400/10 to-purple-500/10 blur-[130px]" />
-      <div className="pointer-events-none absolute top-[36rem] -left-48 -z-10 h-[450px] w-[500px] rounded-full bg-emerald-500/5 blur-[120px]" />
-      <div className="pointer-events-none absolute top-[50rem] -right-48 -z-10 h-[450px] w-[500px] rounded-full bg-amber-500/5 blur-[120px]" />
+    <div className="relative min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary">
+      {/* Ambient background glows - contained in fixed background layer to prevent overflow and double scrollbars */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 h-[550px] w-[1100px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-primary/15 via-indigo-400/10 to-purple-500/10 blur-[130px]" />
+        <div className="absolute top-[36rem] -left-48 h-[450px] w-[500px] rounded-full bg-emerald-500/5 blur-[120px]" />
+        <div className="absolute top-[50rem] -right-48 h-[450px] w-[500px] rounded-full bg-amber-500/5 blur-[120px]" />
+      </div>
 
       {/* Circular Floating Navbar */}
-      <div className="sticky top-3 sm:top-5 z-40 mx-auto w-[calc(100%-1.25rem)] sm:w-[calc(100%-2.5rem)] max-w-5xl transition-all duration-300">
+      <div className="fixed top-3 sm:top-5 left-0 right-0 z-40 mx-auto w-[calc(100%-1.25rem)] sm:w-[calc(100%-2.5rem)] max-w-5xl transition-all duration-300">
         <header className="relative flex h-14 sm:h-16 items-center justify-between rounded-full border border-white/70 bg-white/85 px-3 sm:px-4 shadow-[0_8px_32px_rgba(0,0,0,0.06)] backdrop-blur-2xl ring-1 ring-black/[0.04]">
           {/* Brand Logo & Name */}
           <div
@@ -458,7 +460,7 @@ export default function Page() {
       </div>
 
       {/* Main Container */}
-      <main className="mx-auto max-w-[1280px] px-4 pt-4 sm:pt-6 pb-24 lg:px-8">
+      <main className="mx-auto max-w-[1280px] px-4 pt-20 sm:pt-24 pb-24 lg:px-8">
         {view === 'home' && (
           <Dashboard
             reports={reports}
