@@ -297,84 +297,94 @@ export default function Page() {
       <div className="pointer-events-none absolute top-[36rem] -left-48 -z-10 h-[450px] w-[500px] rounded-full bg-emerald-500/5 blur-[120px]" />
       <div className="pointer-events-none absolute top-[50rem] -right-48 -z-10 h-[450px] w-[500px] rounded-full bg-amber-500/5 blur-[120px]" />
 
-      {/* Navigation Header */}
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-white/85 backdrop-blur-xl shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-        <div className="mx-auto flex h-[66px] sm:h-[70px] max-w-[1280px] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none" onClick={() => setView('home')}>
-            <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-indigo-600 to-blue-700 text-white shadow-md shadow-primary/25">
-              <Package size={18} className="sm:size-5" strokeWidth={2.4} />
+      {/* Circular Floating Navbar */}
+      <div className="sticky top-3 sm:top-5 z-40 mx-auto w-[calc(100%-1.25rem)] sm:w-[calc(100%-2.5rem)] max-w-5xl transition-all duration-300">
+        <header className="relative flex h-14 sm:h-16 items-center justify-between rounded-full border border-white/70 bg-white/85 px-3 sm:px-4 shadow-[0_8px_32px_rgba(0,0,0,0.06)] backdrop-blur-2xl ring-1 ring-black/[0.04]">
+          {/* Brand Logo & Name */}
+          <div
+            className="flex items-center gap-2.5 cursor-pointer select-none pl-1"
+            onClick={() => setView('home')}
+          >
+            <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-primary via-indigo-600 to-blue-600 text-white shadow-md shadow-primary/25 ring-2 ring-white">
+              <Package size={17} className="sm:size-[19px]" strokeWidth={2.4} />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="text-base sm:text-[18px] font-extrabold tracking-tight text-foreground">Lostly</span>
-                <span className="rounded-full border border-primary/20 bg-primary/10 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-primary shrink-0">
+                <span className="text-base sm:text-lg font-black tracking-tight text-foreground">Lostly</span>
+                <span className="hidden xs:inline-flex rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-primary shrink-0">
                   AI Matcher
                 </span>
               </div>
-              <p className="hidden sm:block text-[11px] text-muted-foreground font-medium -mt-0.5 truncate">Campus Intelligence</p>
             </div>
           </div>
 
-          <nav className="hidden items-center gap-1 md:flex">
-            {nav.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => {
-                  if (id === 'matches' && !activeMatchResponse && reports.length > 0) {
-                    handleTriggerMatch(reports[0])
-                  } else {
-                    setView(id as View)
-                  }
-                }}
-                className={`rounded-xl px-4 py-2 text-[13px] font-semibold transition-all ${
-                  view === id
-                    ? 'bg-white text-foreground shadow-sm ring-1 ring-border/80'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                }`}
-              >
-                <Icon size={15} className="mr-2 inline text-primary" />
-                {label}
-                {id === 'reports' && reports.length > 0 && (
-                  <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                    {reports.length}
-                  </span>
-                )}
-              </button>
-            ))}
+          {/* Center Navigation Tabs (Pill Island) */}
+          <nav className="hidden items-center gap-1 rounded-full bg-muted/60 p-1 border border-border/60 md:flex">
+            {nav.map(({ id, label, icon: Icon }) => {
+              const isActive = view === id
+              return (
+                <button
+                  key={id}
+                  onClick={() => {
+                    if (id === 'matches' && !activeMatchResponse && reports.length > 0) {
+                      handleTriggerMatch(reports[0])
+                    } else {
+                      setView(id as View)
+                    }
+                  }}
+                  className={`flex items-center rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-white text-foreground shadow-xs ring-1 ring-border/80'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-white/60'
+                  }`}
+                >
+                  <Icon size={14} className={`mr-1.5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                  {label}
+                  {id === 'reports' && reports.length > 0 && (
+                    <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-extrabold text-primary">
+                      {reports.length}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            {/* Live API status */}
-            <div className="hidden items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1 text-[11px] font-semibold text-emerald-800 sm:flex shadow-2xs">
-              <span className="relative flex h-2 w-2">
+          {/* Right Actions */}
+          <div className="flex items-center gap-2 pr-1">
+            {/* Live API status dot pill */}
+            <div className="hidden items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50/90 px-2.5 py-1 text-[10px] font-bold text-emerald-800 lg:flex shadow-2xs">
+              <span className="relative flex size-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
               </span>
-              API Connected
+              Live API
             </div>
 
+            {/* Primary Action Button */}
             <button
               onClick={() => goReport('LOST')}
-              className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 sm:px-4 sm:py-2 text-xs font-bold text-primary-foreground shadow-sm shadow-primary/25 hover:opacity-95 active:scale-95 transition-all"
+              className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-indigo-600 px-3.5 sm:px-4 py-2 text-xs font-bold text-white shadow-sm shadow-primary/30 hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all"
             >
-              <Plus size={15} />
+              <Plus size={14} strokeWidth={2.5} />
               <span className="hidden xs:inline">Report Item</span>
               <span className="xs:hidden">Report</span>
             </button>
 
+            {/* Mobile Hamburger Toggle */}
             <button
               aria-label="Toggle Navigation Menu"
               onClick={() => setMobileNav(!mobileNav)}
-              className="flex size-9 items-center justify-center rounded-xl border border-border/70 bg-muted/30 p-2 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all md:hidden"
+              className="flex size-9 items-center justify-center rounded-full border border-border/80 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all md:hidden"
             >
-              {mobileNav ? <X size={18} /> : <Menu size={18} />}
+              {mobileNav ? <X size={17} /> : <Menu size={17} />}
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Mobile Navigation Drawer */}
+        {/* Floating Mobile Dropdown Menu Card */}
         {mobileNav && (
-          <div className="border-t border-border/80 bg-white/95 backdrop-blur-xl px-4 py-3 md:hidden shadow-lg animate-in slide-in-from-top-2 duration-200">
+          <div className="mt-2.5 w-full rounded-3xl border border-border/80 bg-white/95 backdrop-blur-2xl p-3.5 shadow-2xl ring-1 ring-black/5 animate-in slide-in-from-top-2 duration-200 md:hidden">
             <nav className="space-y-1">
               {nav.map(({ id, label, icon: Icon }) => {
                 const isActive = view === id
@@ -389,18 +399,18 @@ export default function Page() {
                       }
                       setMobileNav(false)
                     }}
-                    className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-sm font-semibold transition-all ${
+                    className={`flex w-full items-center justify-between rounded-2xl px-4 py-2.5 text-left text-xs font-bold transition-all ${
                       isActive
                         ? 'bg-primary/10 text-primary ring-1 ring-primary/20'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon size={17} className={isActive ? 'text-primary' : 'text-muted-foreground'} />
+                      <Icon size={16} className={isActive ? 'text-primary' : 'text-muted-foreground'} />
                       <span>{label}</span>
                     </div>
                     {id === 'reports' && reports.length > 0 && (
-                      <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">
+                      <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
                         {reports.length}
                       </span>
                     )}
@@ -410,13 +420,13 @@ export default function Page() {
             </nav>
 
             {/* Mobile Drawer Quick Actions */}
-            <div className="mt-3 pt-3 border-t border-border/60 grid grid-cols-2 gap-2">
+            <div className="mt-2.5 pt-2.5 border-t border-border/60 grid grid-cols-2 gap-2">
               <button
                 onClick={() => {
                   goReport('LOST')
                   setMobileNav(false)
                 }}
-                className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500/10 text-amber-800 border border-amber-500/20 py-2.5 text-xs font-bold hover:bg-amber-500/20 active:scale-95 transition-all"
+                className="flex items-center justify-center gap-1.5 rounded-2xl bg-amber-500/10 text-amber-800 border border-amber-500/20 py-2.5 text-xs font-bold hover:bg-amber-500/20 active:scale-95 transition-all"
               >
                 <Search size={14} />
                 Report Lost
@@ -426,7 +436,7 @@ export default function Page() {
                   goReport('FOUND')
                   setMobileNav(false)
                 }}
-                className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500/10 text-emerald-800 border border-emerald-500/20 py-2.5 text-xs font-bold hover:bg-emerald-500/20 active:scale-95 transition-all"
+                className="flex items-center justify-center gap-1.5 rounded-2xl bg-emerald-500/10 text-emerald-800 border border-emerald-500/20 py-2.5 text-xs font-bold hover:bg-emerald-500/20 active:scale-95 transition-all"
               >
                 <Package size={14} />
                 Report Found
@@ -434,7 +444,7 @@ export default function Page() {
             </div>
 
             {/* Mobile API Live status bar */}
-            <div className="mt-2.5 flex items-center justify-between rounded-lg bg-muted/40 px-3 py-1.5 text-[11px] text-muted-foreground">
+            <div className="mt-2 flex items-center justify-between rounded-xl bg-muted/40 px-3 py-1.5 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
                 Live PostgreSQL Sync
@@ -445,10 +455,10 @@ export default function Page() {
             </div>
           </div>
         )}
-      </header>
+      </div>
 
       {/* Main Container */}
-      <main className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8 pb-24 lg:px-8 lg:py-10">
+      <main className="mx-auto max-w-[1280px] px-4 pt-4 sm:pt-6 pb-24 lg:px-8">
         {view === 'home' && (
           <Dashboard
             reports={reports}
