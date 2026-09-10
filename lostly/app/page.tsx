@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
+import Image from 'next/image'
 import {
   Bell,
   CalendarDays,
@@ -111,6 +112,41 @@ function extractSharedTokens(text1: string, text2: string): string[] {
     }
   }
   return Array.from(shared).slice(0, 8)
+}
+
+function ReportTypeImageBadge({
+  type,
+  size = 'md',
+  className = '',
+}: {
+  type: ReportType | string
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+}) {
+  const isLost = type === 'LOST'
+  const imgSrc = isLost ? '/images/badge-lost.jpg' : '/images/badge-found.jpg'
+
+  const sizeClasses = {
+    sm: 'size-10 rounded-xl',
+    md: 'size-11 sm:size-12 rounded-xl sm:rounded-2xl',
+    lg: 'size-14 sm:size-16 rounded-2xl',
+  }[size]
+
+  return (
+    <div
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden border border-border/80 bg-slate-50 shadow-xs ring-1 ring-black/5 transition-transform duration-200 group-hover:scale-105 ${sizeClasses} ${className}`}
+      title={isLost ? 'Lost Item' : 'Found Item'}
+    >
+      <Image
+        src={imgSrc}
+        alt={isLost ? 'Lost Item' : 'Found Item'}
+        width={size === 'lg' ? 64 : size === 'md' ? 48 : 40}
+        height={size === 'lg' ? 64 : size === 'md' ? 48 : 40}
+        className="h-full w-full object-cover"
+        priority={size === 'lg'}
+      />
+    </div>
+  )
 }
 
 const DEMO_SCENARIOS = [
@@ -800,20 +836,21 @@ function Dashboard({
                 className="group flex flex-col justify-between gap-3.5 rounded-2xl border border-border/80 bg-white p-4 sm:p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all sm:flex-row sm:items-center sm:px-6"
               >
                 <div className="flex items-start gap-3.5 min-w-0">
-                  <div
-                    className={`flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-xl font-black text-xs shadow-xs ${
-                      r.type === 'LOST'
-                        ? 'bg-gradient-to-br from-amber-50 to-orange-100 text-amber-800 border border-amber-200/80'
-                        : 'bg-gradient-to-br from-emerald-50 to-teal-100 text-emerald-800 border border-emerald-200/80'
-                    }`}
-                  >
-                    {r.type}
-                  </div>
+                  <ReportTypeImageBadge type={r.type} size="md" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="text-base font-bold text-foreground truncate">
                         {r.category}
                       </h4>
+                      <span
+                        className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          r.type === 'LOST'
+                            ? 'bg-amber-100 text-amber-800 border border-amber-200/80'
+                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200/80'
+                        }`}
+                      >
+                        {r.type}
+                      </span>
                       {r.color && (
                         <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground shrink-0">
                           {r.color}
@@ -954,23 +991,29 @@ function ReportForm({
           <button
             type="button"
             onClick={() => setType('LOST')}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all ${
               type === 'LOST'
                 ? 'bg-amber-500 text-white shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
+            <span className="relative size-5 shrink-0 overflow-hidden rounded-md border border-white/30">
+              <Image src="/images/badge-lost.jpg" alt="Lost" width={20} height={20} className="h-full w-full object-cover" />
+            </span>
             I Lost An Item
           </button>
           <button
             type="button"
             onClick={() => setType('FOUND')}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-all ${
               type === 'FOUND'
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
+            <span className="relative size-5 shrink-0 overflow-hidden rounded-md border border-white/30">
+              <Image src="/images/badge-found.jpg" alt="Found" width={20} height={20} className="h-full w-full object-cover" />
+            </span>
             I Found An Item
           </button>
         </div>
@@ -1227,20 +1270,21 @@ function ReportsView({
               className="group flex flex-col justify-between gap-3.5 rounded-2xl border border-border/80 bg-white p-4 sm:p-5 shadow-xs hover:border-primary/40 hover:shadow-md transition-all sm:flex-row sm:items-center sm:px-6"
             >
               <div className="flex items-start gap-3.5 min-w-0">
-                <div
-                  className={`flex size-10 sm:size-11 shrink-0 items-center justify-center rounded-xl font-black text-xs shadow-xs ${
-                    r.type === 'LOST'
-                      ? 'bg-gradient-to-br from-amber-50 to-orange-100 text-amber-800 border border-amber-200/80'
-                      : 'bg-gradient-to-br from-emerald-50 to-teal-100 text-emerald-800 border border-emerald-200/80'
-                  }`}
-                >
-                  {r.type}
-                </div>
+                <ReportTypeImageBadge type={r.type} size="md" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-base font-bold text-foreground truncate">
                       {r.category}
                     </h3>
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        r.type === 'LOST'
+                          ? 'bg-amber-100 text-amber-800 border border-amber-200/80'
+                          : 'bg-emerald-100 text-emerald-800 border border-emerald-200/80'
+                      }`}
+                    >
+                      {r.type}
+                    </span>
                     {r.color && (
                       <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground shrink-0">
                         {r.color}
@@ -1416,24 +1460,28 @@ function MatchesView({
                   className="flex flex-col justify-between rounded-2xl border border-border bg-white p-5 shadow-xs hover:border-primary/40 transition-all gap-4"
                 >
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
-                          r.type === 'LOST'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-emerald-100 text-emerald-800'
-                        }`}
-                      >
-                        {r.type}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground font-mono">
-                        {r.id.slice(0, 8)}...
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <ReportTypeImageBadge type={r.type} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              r.type === 'LOST'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-emerald-100 text-emerald-800'
+                            }`}
+                          >
+                            {r.type}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground font-mono">
+                            {r.id.slice(0, 8)}...
+                          </span>
+                        </div>
+                        <h4 className="text-base font-bold text-foreground mt-0.5 truncate">
+                          {r.category} {r.color ? `· ${r.color}` : ''}
+                        </h4>
+                      </div>
                     </div>
-
-                    <h4 className="text-base font-bold text-foreground">
-                      {r.category} {r.color ? `· ${r.color}` : ''}
-                    </h4>
 
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -1673,16 +1721,22 @@ function SideBySideMatchInspector({
         <div className="grid gap-3.5 sm:gap-4 grid-cols-1 sm:grid-cols-2">
           {/* Source Column */}
           <div className="rounded-xl border border-border bg-background p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span
-                className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
-                  sourceReport.type === 'LOST'
-                    ? 'bg-amber-100 text-amber-800'
-                    : 'bg-emerald-100 text-emerald-800'
-                }`}
-              >
-                Your Report: {sourceReport.type}
-              </span>
+            <div className="flex items-center gap-2.5">
+              <ReportTypeImageBadge type={sourceReport.type} size="sm" />
+              <div>
+                <span
+                  className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                    sourceReport.type === 'LOST'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-emerald-100 text-emerald-800'
+                  }`}
+                >
+                  Your Report: {sourceReport.type}
+                </span>
+                <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                  ID: {sourceReport.id.slice(0, 8)}...
+                </p>
+              </div>
             </div>
 
             <div>
@@ -1726,19 +1780,27 @@ function SideBySideMatchInspector({
 
           {/* Candidate Column */}
           <div className="rounded-xl border border-border bg-background p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span
-                className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
-                  candidate_report.type === 'LOST'
-                    ? 'bg-amber-100 text-amber-800'
-                    : 'bg-emerald-100 text-emerald-800'
-                }`}
-              >
-                Candidate Match: {candidate_report.type}
-              </span>
-              <span className="text-[10px] text-muted-foreground font-mono">
-                {candidate_report.id.slice(0, 8)}...
-              </span>
+            <div className="flex items-center gap-2.5">
+              <ReportTypeImageBadge type={candidate_report.type} size="sm" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                      candidate_report.type === 'LOST'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-emerald-100 text-emerald-800'
+                    }`}
+                  >
+                    Candidate Match: {candidate_report.type}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    {candidate_report.id.slice(0, 8)}...
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                  Database Record
+                </p>
+              </div>
             </div>
 
             <div>
@@ -1953,15 +2015,7 @@ function ReportDetailsModal({
 
         {/* Header */}
         <div className="flex items-start gap-3.5 pr-8">
-          <div
-            className={`flex size-11 shrink-0 items-center justify-center rounded-xl font-bold text-sm shadow-sm ${
-              report.type === 'LOST'
-                ? 'bg-amber-100 text-amber-800'
-                : 'bg-emerald-100 text-emerald-800'
-            }`}
-          >
-            {report.type === 'LOST' ? <Search size={20} /> : <Package size={20} />}
-          </div>
+          <ReportTypeImageBadge type={report.type} size="lg" />
           <div>
             <div className="flex items-center gap-2">
               <span
@@ -2133,24 +2187,29 @@ function DeleteConfirmationModal({
 
         {/* Report Preview */}
         <div className="mt-4 rounded-xl border border-border bg-muted/40 p-3.5 text-xs">
-          <div className="flex items-center gap-2">
-            <span
-              className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
-                report.type === 'LOST'
-                  ? 'bg-amber-100 text-amber-800'
-                  : 'bg-emerald-100 text-emerald-800'
-              }`}
-            >
-              {report.type}
-            </span>
-            <span className="font-bold text-foreground">
-              {report.category} {report.color ? `· ${report.color}` : ''}
-            </span>
+          <div className="flex items-center gap-3">
+            <ReportTypeImageBadge type={report.type} size="sm" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                    report.type === 'LOST'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-emerald-100 text-emerald-800'
+                  }`}
+                >
+                  {report.type}
+                </span>
+                <span className="font-bold text-foreground">
+                  {report.category} {report.color ? `· ${report.color}` : ''}
+                </span>
+              </div>
+              <p className="mt-1 text-muted-foreground flex items-center gap-1">
+                <MapPin size={11} /> {report.location} · {new Date(report.date_time).toLocaleDateString()}
+              </p>
+            </div>
           </div>
-          <p className="mt-1 text-muted-foreground flex items-center gap-1">
-            <MapPin size={11} /> {report.location} · {new Date(report.date_time).toLocaleDateString()}
-          </p>
-          <p className="mt-1 line-clamp-2 text-muted-foreground italic">
+          <p className="mt-2 line-clamp-2 text-muted-foreground italic border-t border-border/40 pt-2">
             &quot;{report.description}&quot;
           </p>
         </div>
