@@ -1,6 +1,6 @@
-# AI Lost-and-Found Matcher
+# AI_lostlyyy
 
-Production-quality backend for a college AI project implementing **Intelligent Agents** and **Heuristic Matching**.
+Production-quality AI Lost-and-Found Matcher with FastAPI backend and Lostly Next.js frontend implementing **Intelligent Agents** and **Heuristic Matching**.
 
 ## Quick Links
 - **Backend Source Code**: [`backend/`](backend/)
